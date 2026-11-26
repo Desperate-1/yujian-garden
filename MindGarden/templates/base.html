@@ -1,0 +1,117 @@
+{% set garden_departure = {
+    'journal.create': 'journal', 'journal.index': 'journal', 'journal.detail': 'journal',
+    'creation.gallery': 'gallery', 'creation.create_page': 'gallery',
+    'chat.candy_house': 'candy', 'creation.mirror': 'fountain'
+}.get(request.endpoint) %}
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="{{ g_theme }}" data-scene="{{ g_scene.title }}" data-host="{{ g_scene.host }}" data-house="{{ g_scene.house }}" data-sky="{{ g_scene.sky }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#e7efe2">
+    <title>{% block title %}愈见花园{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/scene_guide.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/print_palette.css') }}">
+    {% set has_passage = request.endpoint in ['home', 'creation.garden'] %}
+    {% if has_passage %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/garden_passage.css') }}">
+    {% endif %}
+    {% if garden_departure %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/destination_return.css') }}">
+    {% endif %}
+</head>
+<body>
+    {% if has_passage %}
+    <div id="gardenPassage" hidden aria-hidden="true"
+         data-page="{{ request.endpoint }}" data-register="{{ url_for('auth.register') }}"
+         style="--passage-cover:url('{{ url_for('static', filename='garden/illustrated/' ~ g_theme ~ '/entrance.webp') }}')">
+        <div class="passage-ink"></div>
+        <div class="passage-vista"></div>
+        <div class="passage-air">{% for _ in range(6) %}<i></i>{% endfor %}</div>
+    </div>
+    <script src="{{ url_for('static', filename='js/garden_passage.js') }}"></script>
+    {% endif %}
+    {% if garden_departure in ['journal', 'gallery'] %}
+        {% include '_garden_return.html' %}
+    {% endif %}
+    {# 导航栏做成区块：首页要干净的全屏推门画面，在那里整块不渲染；
+       其余页面不写这个 block，沿用下面这份默认导航。 #}
+    {% block nav %}
+    <nav>
+        <a href="{{ url_for('home') }}" class="nav-brand">✿ 愈见花园</a>
+        <div class="nav-links">
+        {% if current_user.is_authenticated %}
+            {% if not garden_departure %}<a href="{{ url_for('creation.garden') }}">我的花园</a>{% endif %}
+            <a href="{{ url_for('journal.index') }}">树洞日记</a>
+            {# 「心理对话」原来的落点是"会话列表 + 聊天"那一页；
+               现在换成花园里的糖果小屋（小女巫）。
+               这样四个导航入口正好对上花园的四个景点。 #}
+            <a href="{{ url_for('chat.candy_house') }}">樱桃小屋</a>
+            <a href="{{ url_for('creation.gallery') }}">艺术回廊</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-logout">退出账号</a>
+        {% else %}
+            <a href="{{ url_for('auth.login') }}">登录</a>
+            <a href="{{ url_for('auth.register') }}">注册</a>
+        {% endif %}
+        </div>
+    </nav>
+    {% endblock %}
+
+    <div class="content">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flashes">
+                    {% for message in messages %}
+                        <div class="flash">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    {# 风格切换加载幕：换美术风格时全屏过渡，遮住素材替换的中间态 #}
+    <div class="theme-veil" aria-hidden="true">
+        <div class="theme-veil-inner">
+            <span class="theme-veil-emoji">{{ g_themes[g_theme].emoji }}</span>
+            <div class="theme-veil-text">正在重新布置花园…</div>
+            <div class="theme-veil-sub">REARRANGING YOUR GARDEN</div>
+        </div>
+    </div>
+
+    {# 晨日樱花街的播放器，歌单由服务端按当前场景注入。 #}
+    {% if g_music_tracks %}
+    <div class="g3d-music" id="g3dMusic">
+        <button type="button" class="g3d-music-toggle" id="g3dMusicToggle"
+                aria-label="播放背景音乐" title="播放 / 暂停">
+            <span class="g3d-music-glyph" aria-hidden="true"></span>
+        </button>
+        <div class="g3d-music-body">
+            <div class="g3d-music-row">
+                <span class="g3d-music-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="g3d-music-title" id="g3dMusicTitle">花园音乐</span>
+                <button type="button" class="g3d-music-chip" id="g3dMusicNext"
+                        aria-label="换一首" title="随机换一首">换一首</button>
+            </div>
+            <div class="g3d-music-row is-volume">
+                <span class="g3d-music-caption">音量</span>
+                <input type="range" class="g3d-music-volume" id="g3dMusicVolume"
+                       min="0" max="100" step="1" value="12"
+                       aria-label="音乐音量" title="拖动调节音量">
+                <span class="g3d-music-caption" id="g3dMusicVolumeText">12%</span>
+            </div>
+        </div>
+    </div>
+    <script id="g3dMusicData" type="application/json">{{ g_music_tracks | tojson }}</script>
+    <script src="{{ url_for('static', filename='js/site_music.js') }}"></script>
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    {% include '_scene_guide.html' %}
+    <script src="{{ url_for('static', filename='js/scene_guide.js') }}"></script>
+</body>
+</html>

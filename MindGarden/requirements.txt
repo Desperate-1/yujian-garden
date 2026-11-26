@@ -1,0 +1,19 @@
+# Python 3.10 · Flask, user accounts and the illustrated garden
+Flask>=3.1,<4
+Flask-Login>=0.6.3,<1
+Flask-SQLAlchemy>=3.1,<4
+SQLAlchemy>=2.0,<3
+Flask-PyMongo>=3,<4
+PyMongo>=4.1,<5
+PyMySQL[rsa]>=1.1,<2
+pytz
+
+# Imported by the registered blueprints, including in the core web app
+requests>=2.31,<3
+Pillow>=10,<13
+websocket-client>=1.7,<2
+pydantic>=2.7,<3
+jieba==0.42.1
+
+# Offline journal scoring, including its packaged Chinese model
+SnowNLP==0.12.3

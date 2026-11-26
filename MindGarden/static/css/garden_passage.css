@@ -1,0 +1,161 @@
+/* The same view spans the navigation. Its exit frame meets the garden canvas. */
+@property --passage-radius {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+#gardenPassage {
+    --focus-x: 16%;
+    --focus-y: 20%;
+    --wash: #e7dcda;
+    --haze: radial-gradient(ellipse at 17% 19%, #ffe6dcb0, transparent 55%);
+    --mote-paint: linear-gradient(124deg, #fff2ef 9%, #f5c3ce 49%, #e69bb3 80%, #c57e94);
+    --mote-width: clamp(8px, 1.35vmin, 16px);
+    --mote-shape: 86% 12% 75% 32% / 77% 17% 84% 33%;
+    --mote-shadow: 0 1px 2px #9e596b44;
+    --mote-aspect: 1.48;
+    --mote-animation: passage-petal;
+    position: fixed;
+    inset: 0;
+    z-index: 9900;
+    overflow: hidden;
+    isolation: isolate;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+:where(html[data-theme="fresh"]) #gardenPassage:not([data-theme]), #gardenPassage[data-theme="fresh"] {
+    --focus-x: 50%;
+    --focus-y: 11%;
+    --wash: #afbfc0;
+    --haze: radial-gradient(ellipse at 36% 28%, #edf6ebaa, transparent 56%),
+            radial-gradient(ellipse at 72% 60%, #99c8c578, transparent 38%);
+    --mote-paint: linear-gradient(96deg, transparent, #eff6e885 22%, #ffffed 46%, #dbede796 72%, transparent);
+    --mote-width: clamp(31px, 6vmin, 68px);
+    --mote-shape: 85% 40% 86% 40%;
+    --mote-shadow: 0 0 3px #fff5d682;
+    --mote-aspect: 22;
+    --mote-animation: passage-ripple;
+}
+
+:where(html[data-theme="ugly"]) #gardenPassage:not([data-theme]), #gardenPassage[data-theme="ugly"] {
+    --focus-x: 80%;
+    --wash: #29374d;
+    --haze: radial-gradient(ellipse at 81% 19%, #abc5e195, transparent 45%),
+            radial-gradient(ellipse at 20% 82%, #414b6552, transparent 40%);
+    --mote-paint: radial-gradient(circle, #fff8d4 0 12%, #f6da9a 22%, #dcb96853 43%, transparent 73%);
+    --mote-width: clamp(10px, 1.8vmin, 18px);
+    --mote-shape: 50%;
+    --mote-shadow: none;
+    --mote-aspect: 1;
+    --mote-animation: passage-firefly;
+}
+
+#gardenPassage:is([data-phase="depart"], [data-phase="hold"], [data-phase="reveal"]) {
+    visibility: visible;
+}
+#gardenPassage[hidden] { display: none; }
+#gardenPassage > :is(.passage-ink, .passage-vista, .passage-air) { position: absolute; inset: 0; }
+#gardenPassage .passage-ink { background: var(--wash); }
+#gardenPassage .passage-vista {
+    background: var(--wash) var(--passage-cover, none) center / cover no-repeat;
+    transform-origin: var(--passage-x, var(--focus-x)) var(--passage-y, var(--focus-y));
+}
+#gardenPassage .passage-air { overflow: hidden; }
+#gardenPassage .passage-air::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--haze);
+    opacity: .13;
+}
+
+#gardenPassage[data-phase="depart"] {
+    mask-image: radial-gradient(circle at var(--passage-x, var(--focus-x)) var(--passage-y, var(--focus-y)),
+        #000 calc(var(--passage-radius) - clamp(48px, 13vmin, 170px)), transparent var(--passage-radius));
+    animation: passage-open 760ms cubic-bezier(.42,.10,.38,.98) both;
+}
+#gardenPassage[data-phase="depart"] .passage-vista { animation: passage-approach 760ms ease-out both; }
+#gardenPassage[data-phase="depart"] .passage-air::before { animation: passage-light 760ms ease-out both; }
+
+@keyframes passage-open {
+    from { --passage-radius: 0px; opacity: 0; }
+    16% { opacity: .97; }
+    to { --passage-radius: 139vmax; opacity: 1; }
+}
+@keyframes passage-approach {
+    from { opacity: .26; transform: scale(.982); }
+    to { opacity: 1; transform: scale(1); }
+}
+@keyframes passage-light { from { opacity: .78; } to { opacity: .13; } }
+
+#gardenPassage[data-phase="reveal"] { animation: passage-reveal 540ms ease-in-out both; }
+#gardenPassage[data-phase="reveal"] .passage-vista {
+    animation: passage-land 540ms cubic-bezier(.25,.65,.28,1) both;
+}
+#gardenPassage[data-phase="reveal"] .passage-air { animation: passage-air-clear 400ms ease-out both; }
+@keyframes passage-land {
+    from { inset: 0; border-radius: 0; }
+    to {
+        inset: var(--passage-top, 0px) var(--passage-right, 0px) var(--passage-bottom, 0px) var(--passage-left, 0px);
+        border-radius: 15px 18px 13px 17px;
+    }
+}
+@keyframes passage-reveal { 0%, 32% { opacity: 1; } to { opacity: 0; } }
+@keyframes passage-air-clear { to { opacity: 0; } }
+
+/* A handful of petals, reflections or fireflies keeps the slower hand-off alive. */
+#gardenPassage .passage-air i {
+    --size: 1;
+    --tilt: -29deg;
+    --lag: -.45s;
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: calc(var(--mote-width) * var(--size));
+    aspect-ratio: var(--mote-aspect);
+    border-radius: var(--mote-shape);
+    background: var(--mote-paint);
+    box-shadow: var(--mote-shadow);
+    opacity: 0;
+}
+#gardenPassage[data-phase] .passage-air i {
+    animation: var(--mote-animation) 4.7s var(--lag) ease-in-out infinite;
+}
+#gardenPassage i:nth-child(1) { --x: 13%; --y: 33%; }
+#gardenPassage i:nth-child(2) { --x: 28%; --y: 73%; --size: .65; --lag: -3s; --tilt: 24deg; }
+#gardenPassage i:nth-child(3) { --x: 42%; --y: 46%; --size: .46; --lag: -1.6s; }
+#gardenPassage i:nth-child(4) { --x: 68%; --y: 56%; --size: .69; --lag: -2.35s; --tilt: 37deg; }
+#gardenPassage i:nth-child(5) { --x: 83%; --y: 29%; --size: .57; --lag: -3.65s; --tilt: 68deg; }
+#gardenPassage i:nth-child(6) { --x: 91%; --y: 71%; --size: 1.1; --lag: -1.25s; --tilt: -43deg; }
+/* Water glints belong below the shoreline. */
+:where(html[data-theme="fresh"]) #gardenPassage:not([data-theme]) .passage-air i,
+#gardenPassage[data-theme="fresh"] .passage-air i { top: calc(52% + var(--y) * .44); }
+@keyframes passage-petal {
+    0% { opacity: 0; transform: translate(-2.4vmin,-2vmin) rotate(var(--tilt)) scaleX(.72); }
+    26%, 62% { opacity: .9; }
+    56% { transform: translate(.2vmin,.45vmin) rotate(calc(var(--tilt) + 29deg)) scaleX(1); }
+    100% { opacity: 0; transform: translate(3.6vmin,2.9vmin) rotate(calc(var(--tilt) + 63deg)) scaleX(.53); }
+}
+@keyframes passage-ripple {
+    0%, 100% { opacity: 0; transform: translateX(-10px) scaleX(.45); }
+    50% { opacity: .78; transform: translateX(4px) rotate(-3deg) scaleX(1.1); }
+    88% { transform: translateX(10px) scaleX(.76); }
+}
+@keyframes passage-firefly {
+    0%, 100% { opacity: .04; transform: translate(-6px,5px) scale(.64); }
+    52% { opacity: .92; transform: translate(6px,-6px) scale(1.13); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #gardenPassage[data-phase="depart"] {
+        mask-image: none;
+        animation: passage-dissolve-in 120ms linear both;
+    }
+    #gardenPassage[data-phase="reveal"] { animation: passage-air-clear 140ms ease-out both; }
+    #gardenPassage[data-phase] .passage-vista,
+    #gardenPassage[data-phase] .passage-air::before { animation: none; }
+    #gardenPassage .passage-air { display: none; }
+}
+@keyframes passage-dissolve-in { from { opacity: 0; } to { opacity: 1; } }

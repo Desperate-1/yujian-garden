@@ -1,0 +1,25 @@
+{% extends "auth/login.html" %}
+{% block title %}创建我的花园 · 愈见花园{% endblock %}
+{% block auth_form %}
+<h1 id="authTitle">创建我的花园</h1>
+<form method="post">
+    <div class="form-group">
+        <label for="username">用户名</label>
+        <input type="text" id="username" name="username" maxlength="50" autocomplete="username" required>
+    </div>
+    <div class="form-group">
+        <label for="password">密码</label>
+        <input type="password" id="password" name="password" autocomplete="new-password" required>
+    </div>
+    <div class="form-group">
+        <label for="age_group">年龄分组</label>
+        <select id="age_group" name="age_group" required>
+            <option value="child">儿童（3–12 岁）</option>
+            <option value="teen">青少年（13–18 岁）</option>
+            <option value="adult">成人（19 岁及以上）</option>
+        </select>
+    </div>
+    <button type="submit" class="btn-primary">注册 <span aria-hidden="true">→</span></button>
+</form>
+<p class="auth-link">已有账号？ <a href="{{ url_for('auth.login') }}">登录</a></p>
+{% endblock %}

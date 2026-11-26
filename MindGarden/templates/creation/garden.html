@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}游园 · 愈见花园{% endblock %}
+{% block nav %}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/paper_garden.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/destination_return.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/illustrated_garden.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/illustrated_objects.css') }}">
+{% set art = 'garden/illustrated/' ~ g_theme ~ '/' %}
+{% set places = [
+    ('candy',g_scene.house,'chat.candy_house'), ('journal','树洞日记','journal.create'),
+    ('fountain','心灵喷泉','creation.mirror'), ('gallery','艺术回廊','creation.gallery')
+] %}
+<main id="paperGarden" class="paper-garden illustrated-garden g3d-viewport"
+      data-view="entrance" data-render="illustration" data-knock="{{ g_scene.knock }}">
+    <header class="paper-header">
+        <a class="paper-brand" href="{{ url_for('home') }}">愈见花园</a>
+        <a href="{{ url_for('creation.garden') }}" class="destination-return garden-back-link" id="gardenReturn" aria-label="回到花园全景" hidden><span aria-hidden="true">←</span> 回到花园</a>
+        <span class="paper-book-title">游园</span>
+        <div class="paper-tools">
+            {% if g_music_tracks %}<details class="paper-sound" hidden><summary>音乐</summary><div id="paperAudio"></div></details>{% endif %}
+            <details id="gardenDestinations">
+                <summary>花园导航</summary>
+                <div class="paper-menu">
+                    <div class="paper-menu-head" aria-hidden="true"><span>直接进入玩法</span><span>游览</span></div>
+                    {% for key, name, endpoint in places %}
+                    <div class="paper-menu-row">
+                        <a data-play="{{ key }}" href="{{ url_for(endpoint) }}" aria-label="直接进入{{ name }}">{{ name }}</a>
+                        <a data-destination="{{ key }}" href="{{ url_for(endpoint) }}" aria-label="走近{{ name }}">看近景</a>
+                    </div>
+                    {% endfor %}
+                    <a class="paper-utility" href="{{ url_for('home') }}">回风格大厅</a>
+                    <a class="paper-utility" href="{{ url_for('auth.logout') }}">退出账号</a>
+                </div>
+            </details>
+        </div>
+    </header>
+    <div class="paper-stage" style="--overview-backdrop:url('{{ url_for('static',filename=art ~ 'entrance.webp') }}')">
+        <div class="illustrated-board" id="illustratedOverview">
+            <img id="paperStillImage" class="illustrated-poster" src="{{ url_for('static',filename=art ~ 'entrance.webp') }}" alt="">
+            <div class="illustrated-layers" aria-hidden="true">
+                {% for key in ['sky','gallery','journal','ground','candy','fountain'] %}
+                <div class="illustrated-layer" data-layer="{{ key }}">
+                    <img src="{{ url_for('static',filename=art ~ key ~ '.webp') }}" alt="" draggable="false"
+                         {% if key == 'gallery' %}data-garden-effect="clock"{% elif key == 'fountain' %}data-garden-effect="water"{% endif %}>
+                    {% if key == 'sky' %}
+                    <div class="illustrated-sky-track"><img src="{{ url_for('static',filename=art ~ 'orb.webp') }}" alt="" draggable="false"
+                         {% if g_theme != 'ugly' %}data-garden-effect="sun"{% endif %}></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="illustrated-spots">
+                <button type="button" id="gardenSky" class="illustrated-sky-handle" aria-label="移动{{ g_scene.sky }}，可拖动或按方向键" hidden></button>
+                {% for key,name,endpoint in places %}
+                <a class="illustrated-hotspot" data-place="{{ key }}" data-map="{{ key }}"
+                   {% if key == 'fountain' %}data-water-entry{% endif %}
+                   href="{{ url_for(endpoint) }}" aria-label="走近{{ name }}"><span class="illustrated-marker">{{ name }}</span></a>
+                {% endfor %}
+            </div>
+        </div>
+        {% for key,name,endpoint in places %}
+        {% set detail = url_for('static',filename=art ~ key ~ '-detail.webp') %}
+        <section class="illustrated-detail g3d-near-scene" data-scene="{{ key }}" aria-label="{{ name }}近景" hidden>
+            <div class="illustrated-detail-frame">
+                <img class="illustrated-detail-art" data-src="{{ detail }}" alt="" draggable="false"
+                     {% if key == 'fountain' %}data-garden-effect="water-detail"{% endif %}>
+                <a class="illustrated-object{% if key == 'fountain' %} g3d-near-enter{% endif %}" data-object="{{ key }}"
+                   href="{{ url_for(endpoint) }}" aria-label="进入{{ name }}">
+                    {% if key == 'candy' %}
+                    <i class="illustrated-knocker" aria-hidden="true"></i><img class="illustrated-guest" src="{{ url_for('static',filename='garden/hosts/' ~ g_theme ~ '.webp') }}" alt="" hidden>
+                    {% elif key == 'journal' %}
+                    <span class="illustrated-letter" aria-hidden="true"><span>今天，有哪件小事值得记住？</span></span>
+                    {% elif key == 'gallery' %}
+                    <span class="illustrated-print" aria-hidden="true"><img alt=""></span>
+                    {% endif %}
+                </a>
+            </div>
+        </section>
+        {% endfor %}
+    </div>
+    <footer class="paper-caption">
+        <div class="paper-place">
+            <h1 id="paperPlace">{{ g_scene.title }}</h1>
+            <p id="paperHint" aria-live="polite">点小屋、树洞、喷泉或回廊，看看画里的近景。</p>
+        </div>
+        <div id="paperEntrance" class="paper-actions is-on">
+            <a id="walkPath" href="{{ url_for('creation.mirror') }}" class="paper-primary">{{ g_scene.path }} <span aria-hidden="true">→</span></a>
+        </div>
+        <div id="paperPool" class="paper-actions">
+            <a href="{{ url_for('creation.mirror') }}" id="enterDance" class="paper-primary">进入舞厅 <span aria-hidden="true">→</span></a>
+        </div>
+        <div id="paperVisit" class="paper-actions">
+            <button type="button" id="visitAction"></button>
+            <a id="visitEnter" class="paper-primary">进入 <span aria-hidden="true">→</span></a>
+        </div>
+    </footer>
+</main>
+<script defer src="{{ url_for('static', filename='js/garden_life.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/illustrated_garden.js') }}"></script>
+{% endblock %}

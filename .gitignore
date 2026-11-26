@@ -1,0 +1,62 @@
+# Local configuration and signing credentials
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets.json
+credentials*.json
+instance/
+.secrets/
+
+# Accounts, uploads, AI outputs and database snapshots
+/数据备份/
+/DBPortable/
+/DBInstallers/
+/MindGarden/data/
+/MindGarden/crewai_storage/
+/MindGarden/genres/
+/MindGarden/static/candy/generated/
+/MindGarden/static/models/hunyuan3d/*response*.json
+/MindGarden/user_profile/*.json
+/MindGarden/user_profile/data/
+/MindGarden/user_profile/exports/
+uploads/
+exports/
+*.sql
+!/MindGarden/mysql teaching.sql
+*.dump
+*.sqlite*
+*.db
+demo.mp3
+techno.wav
+/MindGarden/static/music/*
+!/MindGarden/static/music/README.md
+
+# Large optional backends and third-party local project checkouts
+/MindGarden/models/*/
+/参考代码_姿态矫正/
+/pose_estimation/
+*.safetensors
+*.ckpt
+*.pth
+/文档/素材来源/*参考/
+
+# Development and runtime files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.cache
+.pytest_cache/
+.idea/
+.vscode/
+*.log*
+logs/
+build/
+dist/
+*.zip
+*.7z
+*.bak
+Thumbs.db
+.DS_Store

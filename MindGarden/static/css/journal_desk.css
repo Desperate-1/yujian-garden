@@ -1,0 +1,485 @@
+/* ================================================================
+   树洞日记 · 书桌与日记本（拟物写作页）
+   ----------------------------------------------------------------
+   设计目标：用户"真的在一本摊开的日记本上写字"。
+   - 桌面：木纹（可选当前风格素材 near/desk_bg.png）
+   - 日记本：活页环 + 横线纸 + 手写感字体
+   - 横线行高与 textarea 的 line-height 严格一致（36px），
+     字就"坐"在横线上 —— 这是拟物成立的关键。
+   配色变量（--t-desk / --t-paper / --t-line / --t-ink）在 themes.css。
+   ================================================================ */
+
+body:has(.desk-page) { background: var(--t-desk, #b98d68); }
+body:has(.desk-page) .content { max-width: none; margin: 0; padding: 0; }
+
+.desk-page {
+    position: relative;
+    min-height: calc(100vh - 56px);
+    min-height: calc(100dvh - 56px);
+    overflow: hidden;
+}
+
+/* 桌面：素材图优先，缺图时是 CSS 木纹 */
+.desk-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--t-desk, #b98d68);
+    pointer-events: none;
+}
+/* 木纹兜底（无素材时也成立）+ 柔光 */
+.desk-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(93deg,
+            rgba(0,0,0,.045) 0 2px, transparent 2px 110px,
+            rgba(255,255,255,.03) 110px 112px, transparent 112px 240px),
+        radial-gradient(ellipse at 50% 0%, rgba(255, 248, 225, .28), transparent 60%);
+}
+.desk-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 42%, transparent 55%, rgba(40, 26, 14, .22));
+}
+
+.desk-scene {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    padding: clamp(20px, 4vh, 48px) 16px 30px;
+}
+
+/* ---------- 桌面小物 ---------- */
+.desk-pencil {
+    position: absolute;
+    left: max(6%, calc(50% - 470px));
+    top: 18%;
+    width: 10px;
+    height: 150px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #e8a0a8, #d97c87 60%, #c05f6c);
+    transform: rotate(14deg);
+    box-shadow: 3px 5px 10px rgba(40, 26, 14, .3);
+}
+.desk-pencil i {
+    position: absolute;
+    bottom: -16px;
+    left: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 16px solid #f2ddba;   /* 削出来的木头尖 */
+}
+.desk-pencil i::after {
+    content: "";
+    position: absolute;
+    left: -2px;
+    top: -16px;
+    border-left: 2px solid transparent;
+    border-right: 2px solid transparent;
+    border-top: 6px solid #4a3a30;    /* 笔芯 */
+}
+.desk-leaf {
+    position: absolute;
+    right: max(7%, calc(50% - 480px));
+    top: 62%;
+    font-size: 40px;
+    transform: rotate(-24deg);
+    filter: drop-shadow(3px 4px 5px rgba(40, 26, 14, .3));
+    opacity: .9;
+}
+
+/* ---------- 日记本 ---------- */
+.notebook {
+    position: relative;
+    width: min(700px, 100%);
+    border-radius: 14px 18px 18px 14px;
+    background: var(--t-paper, #fffdf4);
+    box-shadow:
+        0 2px 0 rgba(255,255,255,.5) inset,
+        0 26px 50px rgba(40, 26, 14, .34),
+        0 4px 12px rgba(40, 26, 14, .2);
+    /* 书脊：左侧一条略深的边 */
+    border-left: 14px solid rgba(120, 85, 50, .16);
+    transform: rotate(-.4deg);
+}
+
+/* 活页环 */
+.nb-rings {
+    position: absolute;
+    top: -11px;
+    left: 40px;
+    right: 40px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+}
+.nb-rings i {
+    width: 12px;
+    height: 22px;
+    border: 3px solid #b9a88c;
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    background: transparent;
+    box-shadow: 0 1px 2px rgba(40, 26, 14, .2);
+}
+
+.nb-form { padding: 34px 38px 26px 46px; }
+
+.nb-pagehead {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(150, 120, 80, .22);
+    margin-bottom: 6px;
+}
+.nb-date {
+    font: 600 15px/1.4 'Xingkai SC', 'STXingkai', 'KaiTi', 'Georgia', serif;
+    color: var(--t-ink, #54452f);
+    letter-spacing: .06em;
+}
+.nb-hint { font-size: 11.5px; color: var(--text-muted, #a89a80); letter-spacing: .1em; }
+
+/* ---------- 纸与字：横线行高 36px，字号 18px，字坐在线上 ---------- */
+.nb-form textarea {
+    width: 100%;
+    min-height: calc(36px * 9 + 8px);
+    padding: 4px 2px 0;
+    border: 0;
+    outline: none;
+    resize: vertical;
+    background:
+        repeating-linear-gradient(180deg,
+            transparent 0 35px,
+            var(--t-line, rgba(150, 120, 90, .30)) 35px 36px);
+    background-attachment: local;      /* 滚动时横线跟着内容走 */
+    font: 400 18px/36px 'Xingkai SC', 'STXingkai', 'KaiTi', 'Segoe Script', cursive;
+    color: var(--t-ink, #54452f);
+    letter-spacing: .04em;
+}
+.nb-form textarea::placeholder { color: rgba(120, 100, 75, .42); }
+
+.nb-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.voice-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    background: var(--sage);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: all .2s;
+}
+.voice-btn:hover { background: var(--sage-hover); box-shadow: 0 3px 10px rgba(0,0,0,.18); }
+.voice-btn.recording { background: #E05555; animation: pulse-rec 1.5s infinite; }
+@keyframes pulse-rec {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(224,85,85,0.4); }
+    50%      { box-shadow: 0 0 0 10px rgba(224,85,85,0); }
+}
+
+.nb-save {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 26px;
+    background: var(--coral, #d4806e);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    transition: all .2s;
+    box-shadow: 0 8px 18px rgba(60, 40, 20, .22);
+}
+.nb-save:hover { background: var(--coral-hover, #c06a58); transform: translateY(-1px); }
+
+.desk-back {
+    display: inline-block;
+    margin-top: 18px;
+    color: rgba(255, 250, 235, .92);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(60, 40, 20, .28);
+    backdrop-filter: blur(4px);
+    transition: background .2s;
+}
+.desk-back:hover { background: rgba(60, 40, 20, .45); }
+
+/* 丑萌风：本子歪一点、环粗一点，像是被小怪兽翻旧的 */
+[data-theme="ugly"] .notebook { transform: rotate(-1.3deg); border-radius: 18px 12px 20px 10px; }
+[data-theme="ugly"] .nb-rings i { border-color: #9c8bb8; }
+[data-theme="ugly"] .desk-pencil { transform: rotate(24deg); }
+
+@media (max-width: 700px) {
+    .nb-form { padding: 28px 18px 20px 24px; }
+    .desk-pencil, .desk-leaf { display: none; }
+    .notebook { border-left-width: 8px; }
+    .nb-form textarea { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .voice-btn.recording { animation: none; }
+}
+
+/* ================================================================
+   小精灵陪伴：趴在桌角的那一小团
+   - CSS 画的占位形象（圆团 + 小叶苗 + 眨眼），后续可整体换成
+     AI 生成的美术素材 —— 换个 .sprite-body 背景即可，DOM 不动
+   ================================================================ */
+/* ⚠️ 糖果屋踩过的同款坑：.sprite-typing 写了 display:inline-flex，
+   作者样式会盖掉浏览器默认的 [hidden]{display:none}，三点藏不住。
+   在这里兜住：只要带 hidden 属性就真的藏住。 */
+.desk-sprite [hidden] { display: none; }
+.desk-sprite {
+    position: absolute;
+    right: max(6%, calc(50% - 500px));
+    top: 20%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 3;
+}
+
+.sprite-body {
+    position: relative;
+    width: 84px;
+    height: 78px;
+    border-radius: 48% 52% 55% 45% / 58% 55% 45% 42%;
+    background: radial-gradient(circle at 34% 30%, #fffdf8 0%, #f3e9ff 52%, #d9c7f0 100%);
+    box-shadow:
+        0 3px 0 rgba(255, 255, 255, .65) inset,
+        0 -10px 18px rgba(183, 158, 203, .3) inset,
+        0 14px 24px rgba(40, 26, 14, .28);
+    animation: spriteBob 3.6s ease-in-out infinite;
+}
+@keyframes spriteBob {
+    0%, 100% { transform: translateY(0) rotate(-1.2deg); }
+    50%      { transform: translateY(-7px) rotate(1.2deg); }
+}
+
+/* 头顶的小叶苗 */
+.sprite-sprout {
+    position: absolute;
+    left: 50%;
+    top: -13px;
+    width: 10px;
+    height: 16px;
+    margin-left: -5px;
+    border-radius: 50% 50% 0 50%;
+    background: linear-gradient(135deg, #9ec97f, #6fa85a);
+    transform: rotate(18deg);
+    transform-origin: bottom center;
+    animation: sproutSway 3.6s ease-in-out infinite;
+}
+.sprite-sprout::before {
+    content: "";
+    position: absolute;
+    left: -11px;
+    top: 4px;
+    width: 10px;
+    height: 14px;
+    border-radius: 50% 50% 50% 0;
+    background: linear-gradient(135deg, #aed690, #7fb368);
+    transform: rotate(-38deg);
+}
+@keyframes sproutSway {
+    0%, 100% { transform: rotate(14deg); }
+    50%      { transform: rotate(24deg); }
+}
+
+/* 眼睛：平时圆睁，隔几秒眨一下 */
+.sprite-eye {
+    position: absolute;
+    top: 34px;
+    width: 9px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4a3a52;
+    animation: spriteBlink 4.8s infinite;
+}
+.sprite-eye.is-left  { left: 24px; }
+.sprite-eye.is-right { right: 24px; }
+@keyframes spriteBlink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    95%           { transform: scaleY(.12); }
+}
+
+/* 腮红 */
+.sprite-blush {
+    position: absolute;
+    top: 48px;
+    width: 13px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(232, 160, 168, .55);
+}
+.sprite-blush.is-left  { left: 15px; }
+.sprite-blush.is-right { right: 15px; }
+
+/* 嘴：一小段弧线，安静微笑 */
+.sprite-mouth {
+    position: absolute;
+    left: 50%;
+    top: 46px;
+    width: 12px;
+    height: 7px;
+    margin-left: -6px;
+    border: 2px solid transparent;
+    border-bottom-color: #4a3a52;
+    border-radius: 50%;
+}
+
+.sprite-name {
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: rgba(60, 40, 20, .3);
+    backdrop-filter: blur(4px);
+    color: rgba(255, 250, 235, .95);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .1em;
+}
+
+/* 说话时身体轻轻前倾一点 */
+.desk-sprite.is-chatting .sprite-body { animation-duration: 2.2s; }
+
+/* ---- 气泡：从小精灵左上方探出来 ---- */
+.sprite-bubble {
+    position: absolute;
+    right: 74px;
+    bottom: calc(100% - 6px);
+    width: max-content;
+    max-width: min(300px, 44vw);
+    padding: 12px 16px;
+    border-radius: 16px 16px 4px 16px;
+    background: rgba(255, 253, 250, .95);
+    box-shadow: 0 12px 28px rgba(40, 26, 14, .26);
+    animation: spriteBubbleIn .35s cubic-bezier(.2, 1.3, .4, 1);
+}
+.sprite-bubble::after {
+    content: "";
+    position: absolute;
+    right: -9px;
+    bottom: 10px;
+    border: 10px solid transparent;
+    border-left-color: rgba(255, 253, 250, .95);
+    border-right: 0;
+    border-bottom-width: 6px;
+}
+@keyframes spriteBubbleIn {
+    from { opacity: 0; transform: translateY(8px) scale(.92); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.sprite-bubble-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #54452f;
+}
+
+/* 思考中的三点（和糖果屋同款节奏） */
+.sprite-typing { display: inline-flex; gap: 5px; padding: 4px 2px; }
+.sprite-typing i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #b79ecb;
+    animation: spriteDot 1.2s infinite;
+}
+.sprite-typing i:nth-child(2) { animation-delay: .15s; }
+.sprite-typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes spriteDot {
+    0%, 60%, 100% { transform: translateY(0); opacity: .5; }
+    30%           { transform: translateY(-4px); opacity: 1; }
+}
+
+/* 丑萌风：小精灵也歪一点，像被风吹歪的小怪兽 */
+[data-theme="ugly"] .sprite-body {
+    border-radius: 40% 60% 48% 62% / 55% 40% 60% 45%;
+    background: radial-gradient(circle at 34% 30%, #fdf9ec 0%, #e9ecd2 52%, #c6cba4 100%);
+}
+[data-theme="ugly"] .sprite-eye.is-left { height: 14px; }   /* 大小眼，丑得可爱 */
+
+/* 治愈女巫来做客：身体换成她的立绘（圆角相框感），CSS 五官退场 */
+.sprite-body.has-portrait {
+    background-size: cover;
+    background-position: center 22%;
+    border: 3px solid rgba(255, 253, 250, .9);
+    box-shadow:
+        0 3px 0 rgba(255, 255, 255, .65) inset,
+        0 14px 24px rgba(40, 26, 14, .3);
+}
+.sprite-body.has-portrait i { display: none; }
+.sprite-body.has-portrait .sprite-sprout { display: none; }
+
+@media (max-width: 700px) {
+    .desk-sprite { right: 4%; top: 8%; transform: scale(.78); transform-origin: top right; }
+    .sprite-bubble { right: 64px; max-width: 62vw; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sprite-body, .sprite-sprout, .sprite-eye { animation: none; }
+}
+
+/* The illustrated desk supplies the texture; the notebook uses solid spot inks. */
+.desk-page .desk-bg::before, .desk-page .desk-bg::after { content: none; }
+.desk-page .desk-pencil { background: var(--mg-accent); box-shadow: 2px 2px 0 var(--mg-ink); }
+.desk-pencil i { border-top-color: var(--mg-sand); }
+.desk-pencil i::after { border-top-color: var(--mg-ink); }
+.desk-page .desk-leaf { color: var(--mg-ink); filter: none; opacity: 1; }
+.desk-page .notebook { border: 1px solid var(--mg-ink); border-left: 10px solid var(--mg-sand); box-shadow: 4px 5px 0 var(--mg-ink); }
+html[data-theme] .desk-page .nb-rings i { border-color: var(--mg-ink); box-shadow: none; }
+.nb-pagehead { border-bottom-color: var(--mg-ink); }
+.desk-page .nb-form textarea {
+    --t-line: var(--mg-leaf);
+    font-family: Georgia, "KaiTi", "Songti SC", serif;
+}
+.nb-form textarea::placeholder { color: var(--mg-ink); }
+.desk-page .nb-save, .desk-page .voice-btn, .desk-page .desk-back {
+    padding: 8px 16px; border: 1px solid var(--mg-ink); border-radius: 4px;
+    background: var(--mg-ink); color: var(--mg-paper); box-shadow: none;
+}
+.desk-page .voice-btn { background: var(--mg-paper); color: var(--mg-ink); }
+.desk-page .voice-btn.recording { background: var(--mg-accent); color: var(--mg-paper); animation: none; }
+.desk-page .desk-back:hover, .desk-page .nb-save:hover { text-decoration: underline; }
+.desk-page .sprite-body:not(.has-portrait) { background: var(--mg-paper); border: 2px solid var(--mg-ink); box-shadow: 2px 3px 0 var(--mg-ink); }
+.desk-page .sprite-eye { background: var(--mg-ink); }
+.desk-page .sprite-mouth { border-bottom-color: var(--mg-ink); }
+.desk-page .sprite-blush { background: var(--mg-sand); }
+.desk-page .sprite-sprout, .desk-page .sprite-sprout::before { background: var(--mg-leaf); }
+.desk-page .sprite-name { background: var(--mg-ink); color: var(--mg-paper); }
+.desk-page .sprite-bubble { border: 1px solid var(--mg-ink); box-shadow: 2px 2px 0 var(--mg-ink); background: var(--mg-paper); }
+.desk-page .sprite-bubble::after { border-left-color: var(--mg-paper); }
+.desk-page .sprite-bubble-text { color: var(--mg-ink); }
+.desk-page .sprite-typing i { background: var(--mg-ink); }
+@media (max-width: 600px) {
+    .desk-page .desk-sprite { position: relative; top: auto; right: auto; justify-self: end; margin: -32px 3px 64px 0; transform-origin: top right; }
+    .desk-page .sprite-bubble { bottom: 0; right: 110%; }
+    .desk-page .nb-form { padding: 26px 16px 18px; }
+    .desk-page .nb-actions { gap: 6px; flex-wrap: wrap; }
+    .desk-page .nb-form textarea { min-height: 230px; height: 37vh; }
+}

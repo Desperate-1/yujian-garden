@@ -1,0 +1,78 @@
+/* Five spot inks per theme, shared by the interface and the artwork exporter. */
+html[data-theme="cute"] {
+    --mg-ink: #353D34;
+    --mg-leaf: #849374;
+    --mg-paper: #F6EAD5;
+    --mg-sand: #DEAF78;
+    --mg-accent: #AE4A47;
+}
+html[data-theme="fresh"] {
+    --mg-ink: #213E37;
+    --mg-leaf: #6C9280;
+    --mg-paper: #F2F1DF;
+    --mg-sand: #BAC6A5;
+    --mg-accent: #935D42;
+}
+html[data-theme="ugly"] {
+    --mg-ink: #393545;
+    --mg-leaf: #9D9774;
+    --mg-paper: #F5ECD6;
+    --mg-sand: #DBB875;
+    --mg-accent: #84637E;
+}
+html[data-theme] {
+    --text: var(--mg-ink);
+    --text-soft: var(--mg-ink);
+    --text-muted: var(--mg-ink);
+    --t-wall: var(--mg-paper);
+    --t-frame: var(--mg-sand);
+    --t-frame-edge: var(--mg-ink);
+    --t-plaque: var(--mg-sand);
+    --t-desk: var(--mg-leaf);
+    --t-paper: var(--mg-paper);
+    --t-line: color-mix(in srgb, var(--mg-ink) 18%, transparent);
+    --t-ink: var(--mg-ink);
+    --cream: var(--mg-paper);
+    --t-body-bg: var(--mg-paper);
+    --warm-white: var(--mg-paper);
+    --card-bg: var(--mg-paper);
+    --border: var(--mg-leaf);
+    --border-light: var(--mg-sand);
+    --sage: var(--mg-ink);
+    --sage-hover: var(--mg-accent);
+    --sage-dark: var(--mg-ink);
+    --sage-soft: var(--mg-leaf);
+    --sage-light: var(--mg-paper);
+    --sage-pale: var(--mg-paper);
+    --coral: var(--mg-accent);
+    --coral-hover: var(--mg-ink);
+    --coral-light: var(--mg-paper);
+    --slate: var(--mg-ink);
+    --slate-hover: var(--mg-accent);
+    --nav-1: var(--mg-ink);
+    --nav-2: var(--mg-ink);
+    --nav-3: var(--mg-ink);
+    accent-color: var(--mg-ink);
+}
+html[data-theme] nav :is(.nav-brand,.nav-links a) { color: var(--mg-paper); }
+html[data-theme] .g3d-viewport { background: var(--mg-paper); }
+html[data-theme] .g3d-viewport :is(.g3d-spot-label,.g3d-spot-hint,.g3d-tool,.g3d-depth-meter,.g3d-greeting,.g3d-near-card) {
+    background: var(--mg-paper);
+    color: var(--mg-ink);
+    border: 1px solid var(--mg-ink);
+    box-shadow: none;
+    text-shadow: none;
+    backdrop-filter: none;
+}
+html[data-theme] .g3d-greeting p { color: var(--mg-ink); }
+html[data-theme] .g3d-spot-label { border-radius: 5px; }
+html[data-theme] .g3d-tool:hover, html[data-theme] .g3d-spot:focus-visible .g3d-spot-label {
+    background: var(--mg-ink); color: var(--mg-paper);
+}
+html[data-theme] .g3d-spot::before { background: none; }
+html[data-theme] :is(.g3d-near-kicker,.g3d-near-copy p,.g3d-near-copy h2) { color: var(--mg-ink); }
+html[data-theme] .g3d-near-enter { background: var(--mg-ink); color: var(--mg-paper); }
+html[data-theme] .g3d-near-back { background: var(--mg-paper); color: var(--mg-ink); }
+html[data-theme] .theme-veil-emoji { font: italic 44px Georgia,serif; color: var(--mg-accent); }
+:focus-visible { outline: 3px solid var(--mg-accent); outline-offset: 4px; }
+

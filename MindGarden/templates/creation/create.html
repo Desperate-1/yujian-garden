@@ -1,0 +1,556 @@
+{% extends "base.html" %}
+
+{% block title %}创作疗愈 - 愈见花园{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/creation_create.css') }}">
+<div class="creation-container">
+    <h2>创作疗愈</h2>
+    
+    <div class="camera-section">
+        <h3>准备照片</h3>
+        <video id="video" width="512" height="512" autoplay muted playsinline></video>
+        <canvas id="canvas" width="600" height="600" style="display:none;"></canvas>
+
+        <!-- 摄像头状态提示 / 失败引导 -->
+        <div id="camera-status" class="camera-status"></div>
+        <div id="camera-error" class="camera-error" style="display:none;"></div>
+
+        <div class="camera-controls">
+            <button id="capture-btn" class="btn-primary">拍摄照片</button>
+            <label for="file-input" class="btn btn-secondary file-btn">从相册选择</label>
+            <input type="file" id="file-input" accept="image/*" aria-label="从相册选择照片">
+            <button id="retake-btn" class="btn-secondary" style="display:none;">重新选择</button>
+            <button id="generate-btn" class="btn-success" style="display:none;">生成艺术创作</button>
+        </div>
+    </div>
+
+    <!-- 创作类型选择 -->
+    <div id="type-select-section" style="display:none;">
+        <h3>选择创作类型</h3>
+        <div class="type-radio-group">
+            <label class="type-radio-card">
+                <input type="radio" name="art_type" value="1" checked>
+                <div class="type-radio-content">
+                    <span class="type-icon">▧</span>
+                    <span class="type-name">图片生成</span>
+                    <span class="type-desc">HunyuanDiT · 疗愈风格画面</span>
+                </div>
+            </label>
+            <label class="type-radio-card">
+                <input type="radio" name="art_type" value="2">
+                <div class="type-radio-content">
+                    <span class="type-icon">▤</span>
+                    <span class="type-name">动画生成</span>
+                    <span class="type-desc">AnimateDiff · 轻盈动画</span>
+                </div>
+            </label>
+            <label class="type-radio-card">
+                <input type="radio" name="art_type" value="3">
+                <div class="type-radio-content">
+                    <span class="type-icon">✣</span>
+                    <span class="type-name">风格迁移</span>
+                    <span class="type-desc">InstructPix2Pix · 卡通风格</span>
+                </div>
+            </label>
+            <label class="type-radio-card">
+                <input type="radio" name="art_type" value="4">
+                <div class="type-radio-content">
+                    <span class="type-icon">◇</span>
+                    <span class="type-name">3D生成</span>
+                    <span class="type-desc">腾讯混元3D · 立体形象</span>
+                </div>
+            </label>
+            <label class="type-radio-card">
+                <input type="radio" name="art_type" value="5">
+                <div class="type-radio-content">
+                    <span class="type-icon">♫</span>
+                    <span class="type-name">音乐生成</span>
+                    <span class="type-desc">MusicLDM · 疗愈旋律</span>
+                </div>
+            </label>
+        </div>
+    </div>
+
+    <!-- 【疗愈回廊创新点】创作意图：把一次工具操作变成一次心理仪式 -->
+    <div class="intent-section">
+        <label for="intent-input" class="intent-label">
+            <span class="intent-icon">✦</span>
+            此刻，你想安放什么情绪？<span class="intent-optional">（可选）</span>
+        </label>
+        <input type="text" id="intent-input" class="intent-input" maxlength="40"
+               placeholder="例如：今天的疲惫 / 说不出口的委屈 / 一点点小开心">
+        <p class="intent-hint">写下来会随作品一起保存，让回廊记住这一刻的你。</p>
+
+        <!-- 期望心情：给生成模型一个明确的情绪方向 -->
+        <div class="mood-block">
+            <div class="mood-head">
+                <span class="mood-title">你希望得到什么样的心情？</span>
+                <span class="intent-optional">（可选，会影响生成方向）</span>
+            </div>
+            <div class="mood-chips" id="mood-chips">
+                <button type="button" class="mood-chip" data-mood="平静"
+                        data-hint="calm and peaceful, soft muted colors, gentle stillness">平静</button>
+                <button type="button" class="mood-chip" data-mood="温暖"
+                        data-hint="warm and cozy, golden sunlight, amber and cream tones">温暖</button>
+                <button type="button" class="mood-chip" data-mood="轻盈"
+                        data-hint="light and airy, floating feeling, pastel palette, soft breeze">轻盈</button>
+                <button type="button" class="mood-chip" data-mood="被治愈"
+                        data-hint="healing and comforting, tender embrace, nurturing glow">被治愈</button>
+                <button type="button" class="mood-chip" data-mood="充满力量"
+                        data-hint="empowered and strong, rising light, vivid yet soft contrast">充满力量</button>
+                <button type="button" class="mood-chip" data-mood="释然"
+                        data-hint="letting go and relief, open sky, drifting clouds, clean light">释然</button>
+            </div>
+            <input type="hidden" id="mood-input" value="">
+            <input type="hidden" id="mood-hint" value="">
+            <p class="intent-hint" id="mood-preview">
+                选一个词，AI 会把它融进画面/旋律的基调里 —— 让作品朝着你想要的方向长。
+            </p>
+        </div>
+    </div>
+
+    <div id="preview-section" style="display:none;">
+        <h3>拍摄预览</h3>
+        <img id="preview-img" width="512" height="512">
+    </div>
+
+    <!-- 【学姐方法】关节点矫正可视化。
+         由环境变量 SHOW_SKELETON 控制是否对用户展示：
+         开=展示矫正前后的骨架对比（技术亮点，也便于核对矫正效果）
+         关=完全隐藏，界面与原来一致 -->
+    <div id="skeleton-section" style="display:none;">
+        <h4 class="skeleton-title">🦴 关节点矫正</h4>
+        <p class="skeleton-desc" id="skeleton-desc"></p>
+        <img id="skeleton-img" class="skeleton-img">
+    </div>
+    
+    <div id="result-section" style="display:none;">
+        <h3>艺术作品</h3>
+        <img id="result-img" width="512" height="512" style="display:none;">
+        <p>创作完成！已保存到您的回廊。</p>
+        <a href="{{ url_for('creation.gallery') }}" class="btn-primary">查看回廊</a>
+        <a href="{{ url_for('creation.create_page') }}" class="btn-secondary">继续创作</a>
+    </div>
+    
+    <div id="loading" style="display:none;">
+        <div class="spinner"></div>
+        <p id="loading-label">正在生成艺术作品，请稍候...</p>
+
+        <!-- 进度条：本地模型很慢（出图 13~17 分钟），必须让用户看到进行到哪一步 -->
+        <div class="progress-wrap">
+            <div class="progress-track">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+            <div class="progress-meta">
+                <span id="progress-percent">0%</span>
+                <span id="progress-elapsed">已用 0 秒</span>
+            </div>
+        </div>
+        <p id="progress-detail" class="progress-detail"></p>
+        <p class="progress-hint">生成期间请勿关闭页面或刷新；运行大模型时不要再开其他占内存的程序。</p>
+    </div>
+</div>
+
+<script>
+let stream = null;
+// 保存"本次要送去做创作的图片"，拍照和上传两条路径都写到这里
+let imageData = null;
+
+// ============ 摄像头 ============
+async function startCamera() {
+    const statusBox = document.getElementById('camera-status');
+    const errBox = document.getElementById('camera-error');
+    const video = document.getElementById('video');
+
+    errBox.style.display = 'none';
+
+    // 先做前置检查，给出人能看懂的原因，而不是一句 "undefined"
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showCameraError('当前浏览器不支持摄像头调用，请改用「从相册选择」。');
+        return;
+    }
+    if (!window.isSecureContext) {
+        showCameraError('开启摄像头需要 HTTPS 或本机 localhost 地址。也可以直接从相册选择照片。');
+        return;
+    }
+
+    statusBox.textContent = '正在请求摄像头权限…（浏览器会弹出授权提示，请点「允许」）';
+    statusBox.style.display = 'block';
+
+    try {
+        const camera = await navigator.mediaDevices.getUserMedia({ video: true });
+        if (imageData) {
+            camera.getTracks().forEach(track => track.stop());
+            return;
+        }
+        stream = camera;
+        video.srcObject = stream;
+        video.style.display = 'block';
+        statusBox.textContent = '摄像头已就绪，点击「拍摄照片」即可。';
+    } catch (err) {
+        // 把浏览器给的错误码翻译成可操作的排查步骤
+        let hint = '';
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            hint = '权限被拒绝了。请点击地址栏左侧的 🔒/⚙️ 图标 → 把「摄像头」改成「允许」→ 刷新页面。\n'
+                 + '若仍不行，检查 Windows：设置 → 隐私和安全性 → 摄像头 → 打开「让应用访问你的摄像头」和「让桌面应用访问你的摄像头」。';
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+            hint = '没有检测到摄像头设备。如果是台式机，请改用「从相册选择」上传图片。';
+        } else if (err.name === 'NotReadableError') {
+            hint = '摄像头被其他程序占用了（比如正在视频会议）。请关掉其他程序后重试，或改用「从相册选择」。';
+        } else {
+            hint = '错误信息：' + err.name + ' - ' + err.message;
+        }
+        showCameraError(hint);
+    }
+}
+
+function showCameraError(msg) {
+    const errBox = document.getElementById('camera-error');
+    const statusBox = document.getElementById('camera-status');
+    statusBox.style.display = 'none';
+    errBox.textContent = '摄像头不可用。' + msg;
+    errBox.style.display = 'block';
+    // 摄像头用不了就把视频区收起，避免一片黑框吓人
+    document.getElementById('video').style.display = 'none';
+}
+
+// ============ 拍照 ============
+document.getElementById('capture-btn').addEventListener('click', function() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    if (!stream || video.videoWidth === 0) {
+        showCameraError('摄像头画面还没准备好。请稍等一两秒，或直接改用「从相册选择」。');
+        return;
+    }
+
+    // 按原始比例居中裁剪成正方形，避免把人拉变形
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const side = Math.min(vw, vh);
+    const sx = (vw - side) / 2, sy = (vh - side) / 2;
+
+    canvas.width = 600;
+    canvas.height = 600;
+    ctx.drawImage(video, sx, sy, side, side, 0, 0, canvas.width, canvas.height);
+
+    imageData = canvas.toDataURL('image/jpeg', 0.92);
+    onImageReady();
+});
+
+// ============ 从相册选择 ============
+document.getElementById('file-input').addEventListener('change', function(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        alert('请选择图片文件（jpg / png / webp 等）。');
+        e.target.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        const img = new Image();
+        img.onload = function() {
+            // 统一缩放到 600x600 画布（保持比例，居中，多余部分白底）
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 600;
+            canvas.height = 600;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 600, 600);
+
+            const scale = Math.min(600 / img.width, 600 / img.height);
+            const w = Math.round(img.width * scale);
+            const h = Math.round(img.height * scale);
+            ctx.drawImage(img, Math.round((600 - w) / 2), Math.round((600 - h) / 2), w, h);
+
+            imageData = canvas.toDataURL('image/jpeg', 0.92);
+            onImageReady();
+        };
+        img.onerror = function() { alert('这张图片无法读取，请换一张试试。'); };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';   // 允许连续选同一张
+});
+
+// ============ 图片就绪后统一切换界面状态 ============
+function onImageReady() {
+    // 停掉摄像头，省电也释放设备
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    const video = document.getElementById('video');
+    video.srcObject = null;
+    video.style.display = 'none';
+    document.getElementById('camera-status').style.display = 'none';
+    document.getElementById('camera-error').style.display = 'none';
+
+    document.getElementById('preview-img').src = imageData;
+    document.getElementById('preview-section').style.display = 'block';
+    document.getElementById('type-select-section').style.display = 'block';
+    document.getElementById('retake-btn').style.display = 'inline-block';
+    document.getElementById('result-section').style.display = 'none';
+
+    // 生成按钮依旧放在摄像头那一排，但此时视频已隐藏
+    document.getElementById('generate-btn').style.display = 'inline-block';
+    document.getElementById('generate-btn').disabled = false;
+    document.getElementById('capture-btn').style.display = 'none';
+
+    // 滚到类型选择，提示用户下一步
+    document.getElementById('type-select-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ============ 重新选择 ============
+document.getElementById('retake-btn').addEventListener('click', function() {
+    imageData = null;
+    document.getElementById('preview-section').style.display = 'none';
+    document.getElementById('type-select-section').style.display = 'none';
+    document.getElementById('retake-btn').style.display = 'none';
+    document.getElementById('generate-btn').style.display = 'none';
+    document.getElementById('capture-btn').style.display = 'inline-block';
+    document.getElementById('result-section').style.display = 'none';
+    document.getElementById('video').style.display = 'block';
+    startCamera();   // 重新尝试摄像头；不行的话会再次给出上传引导
+});
+
+// 生成艺术创作
+document.getElementById('generate-btn').addEventListener('click', async function() {
+    // 用拍照/上传时统一存好的图，不再从 canvas 重取（上传路径下 canvas 只是中转）
+    if (!imageData) {
+        alert('还没有选择照片，请先「拍摄照片」或「从相册选择」。');
+        return;
+    }
+
+    // 获取选中的创作类型
+    const selectedType = document.querySelector('input[name="art_type"]:checked');
+    const typeindex = selectedType ? parseInt(selectedType.value) : 6;
+
+    // 关闭摄像头
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('preview-section').style.display = 'none';
+    document.getElementById('type-select-section').style.display = 'none';
+    document.getElementById('generate-btn').disabled = true;
+    document.getElementById('file-input').disabled = true;
+    document.getElementById('retake-btn').disabled = true;
+    document.getElementById('result-section').style.display = 'none';
+
+    // 启动进度条
+    startProgressPolling(typeindex);
+
+    try {
+        const response = await fetch('/generate_art', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                image_data: imageData,
+                typeindex: typeindex,
+                intent: (document.getElementById('intent-input') || {}).value || '',
+                mood: (document.getElementById('mood-input') || {}).value || '',
+                mood_hint: (document.getElementById('mood-hint') || {}).value || ''
+            })
+        });
+
+        const result = await response.json();
+        stopProgressPolling();
+
+        if (result.success) {
+            // 根据内容类型显示不同结果
+            const resultImg = document.getElementById('result-img');
+            const resultSection = document.getElementById('result-section');
+
+            if (result.content_type === 'music') {
+                // 音乐：不显示图片，仅显示成功消息
+                resultImg.style.display = 'none';
+            } else if (result.image_url) {
+                // 图片/动画/风格迁移/3D预览：显示图片
+                resultImg.src = result.image_url;
+                resultImg.style.display = 'block';
+            } else {
+                resultImg.style.display = 'none';
+            }
+
+            // 在结果区域显示作品类型
+            const typeNames = {1: '图片', 2: '动画', 3: '风格迁移', 4: '3D模型', 5: '音乐'};
+            const typeName = typeNames[typeindex] || '艺术';
+            resultSection.querySelector('p').textContent = `${typeName}创作完成！已保存到您的回廊。`;
+
+            // 【学姐方法】展示关节矫正效果（后端返回 skeleton_url 时才显示）
+            const skSection = document.getElementById('skeleton-section');
+            const skImg = document.getElementById('skeleton-img');
+            const skDesc = document.getElementById('skeleton-desc');
+            if (result.skeleton_url) {
+                skImg.src = result.skeleton_url;
+                skDesc.textContent = '红线是从照片里识别到的原始关节位置，绿线是矫正后的结果。'
+                    + '系统会把置信度低、可能错位的关节往人体结构上修正，让后续的创作更贴合你的姿势。';
+                skSection.style.display = 'block';
+            } else {
+                skSection.style.display = 'none';
+            }
+
+            resultSection.style.display = 'block';
+        } else {
+            alert('生成失败: ' + result.error);
+        }
+    } catch (error) {
+        alert('网络错误: ' + error.message);
+    } finally {
+        stopProgressPolling();
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('generate-btn').disabled = false;
+        document.getElementById('file-input').disabled = false;
+        document.getElementById('retake-btn').disabled = false;
+        if (document.getElementById('result-section').style.display === 'none') {
+            document.getElementById('preview-section').style.display = 'block';
+            document.getElementById('type-select-section').style.display = 'block';
+        }
+    }
+});
+
+
+// ============ 期望心情选择（疗愈回廊创新点）============
+// 选中的情绪会作为"生成方向"传给后端，由提示词生成环节融进画面/旋律基调。
+(function initMoodChips() {
+    const box = document.getElementById('mood-chips');
+    const moodInput = document.getElementById('mood-input');
+    const moodHint = document.getElementById('mood-hint');
+    const preview = document.getElementById('mood-preview');
+    if (!box) return;
+
+    box.addEventListener('click', (e) => {
+        const chip = e.target.closest('.mood-chip');
+        if (!chip) return;
+
+        const already = chip.classList.contains('active');
+        // 再点一次取消选择
+        box.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
+
+        if (already) {
+            moodInput.value = '';
+            moodHint.value = '';
+            preview.textContent = '选一个词，AI 会把它融进画面/旋律的基调里 —— 让作品朝着你想要的方向长。';
+            return;
+        }
+
+        chip.classList.add('active');
+        const mood = chip.dataset.mood;
+        moodInput.value = mood;
+        moodHint.value = chip.dataset.hint || '';
+        preview.textContent = `已选择「${mood}」—— 生成时会朝这个方向努力，但 AI 作品仍有随机性，请以实际效果为准。`;
+    });
+})();
+
+// ============ 生成进度条 ============
+// 本地模型很慢（出图 13~17 分钟），只给一个转圈动画用户会以为卡死了。
+// 这里轮询后端 /generate_art/progress，显示"当前阶段 + 已用时间 + 进度"。
+let progressTimer = null;
+
+const TYPE_ESTIMATE = {
+    1: '预计 14~17 分钟（HunyuanDiT 1024×1024，15 步）',
+    2: '预计 4~5 分钟（AnimateDiff 动画）',
+    3: '预计 1~2 分钟（InstructPix2Pix 风格迁移）',
+    4: '预计 1~2 分钟（腾讯云混元生 3D）',
+    5: '预计 0.5~1 分钟（AudioLDM 2 音乐）',
+    6: '预计 0.5~1 分钟（AudioLDM 2 音乐）'
+};
+
+function fmtSeconds(s) {
+    s = Math.round(s || 0);
+    if (s < 60) return s + ' 秒';
+    const m = Math.floor(s / 60), r = s % 60;
+    return m + ' 分 ' + r + ' 秒';
+}
+
+function renderProgress(p) {
+    const bar = document.getElementById('progress-bar');
+    const pct = document.getElementById('progress-percent');
+    const el = document.getElementById('progress-elapsed');
+    const label = document.getElementById('loading-label');
+    const detail = document.getElementById('progress-detail');
+    if (!bar) return;
+
+    const percent = Math.max(0, Math.min(100, p.percent || 0));
+    bar.style.width = percent + '%';
+    pct.textContent = percent + '%';
+    el.textContent = '已用 ' + fmtSeconds(p.elapsed_sec);
+
+    if (p.label) label.textContent = p.label;
+
+    let d = p.detail || '';
+    if (p.stage === 'error' && p.error) d = p.error;
+    detail.textContent = d;
+}
+
+async function pollProgress() {
+    try {
+        const r = await fetch('/generate_art/progress', { cache: 'no-store' });
+        if (r.ok) renderProgress(await r.json());
+    } catch (e) {
+        /* 轮询失败不打扰用户，主请求还在跑 */
+    }
+}
+
+function startProgressPolling(typeindex) {
+    stopProgressPolling();
+    // 先把界面重置成本次的预估信息，避免显示上一次的残留
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.width = '0%';
+    document.getElementById('progress-percent').textContent = '0%';
+    document.getElementById('progress-elapsed').textContent = '已用 0 秒';
+    document.getElementById('loading-label').textContent = '正在生成艺术作品，请稍候...';
+    document.getElementById('progress-detail').textContent = TYPE_ESTIMATE[typeindex] || '';
+
+    pollProgress();
+    progressTimer = setInterval(pollProgress, 2000);
+}
+
+function stopProgressPolling() {
+    if (progressTimer) {
+        clearInterval(progressTimer);
+        progressTimer = null;
+    }
+}
+
+
+// ============ 从心灵喷泉带照片进来 ============
+// 舞厅里拍好 pose 点「带去疗愈回廊创作」会跳到 /creation/create?from=fountain，
+// 照片躺在 sessionStorage 里——直接填进预览，连摄像头都不用开。
+function tryFountainPhoto() {
+    try {
+        if (!/[?&]from=fountain/.test(location.search)) return false;
+        const photo = sessionStorage.getItem('fountain_photo');
+        if (!photo) return false;
+        sessionStorage.removeItem('fountain_photo');   // 用一次就清，刷新不残留
+        imageData = photo;
+        onImageReady();
+        return true;
+    } catch (e) {
+        return false;   // 存储被禁用等场景：走常规摄像头流程
+    }
+}
+
+// 页面加载时启动摄像头（带着喷泉照片来的就不开摄像头了）
+window.addEventListener('load', function() {
+    if (!tryFountainPhoto()) startCamera();
+});
+
+// 页面卸载时关闭摄像头
+window.addEventListener('beforeunload', function() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+});
+</script>
+
+{% endblock %}

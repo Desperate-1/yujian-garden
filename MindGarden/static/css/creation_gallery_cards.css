@@ -1,0 +1,112 @@
+/* Garden exhibition cards: replacement presentation styles for preserved artwork features. */
+
+/* ============================================================
+   疗愈回廊（作品列表页）容器
+   ------------------------------------------------------------
+   花园场景已拆到 /garden，这个页面只负责陈列。
+   卡片样式沿用上面的 .garden-exhibition 前缀，所以容器同时挂了两个类。
+   ============================================================ */
+.healing-exhibition {
+    width: min(1160px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 42px 0 84px;
+}
+.exhibition-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 22px;
+    flex-wrap: wrap;
+    margin: 0 0 36px;
+    padding: 0 4px 22px;
+    border-bottom: 1px solid #e6e9dd;
+}
+.exhibition-kicker { color: #6d8d70; font-size: 10px; font-weight: 800; letter-spacing: .2em; }
+.exhibition-heading h1 {
+    margin: 10px 0 4px;
+    font: 500 clamp(28px, 3.6vw, 40px) 'Georgia', 'Songti SC', serif;
+    letter-spacing: .08em; color: #3f614c;
+}
+.exhibition-heading p { margin: 0; color: #829080; font-size: 13.5px; }
+.exhibition-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.garden-create-link {
+    padding: 12px 19px; border-radius: 999px; background: #547d63; color: #fff;
+    text-decoration: none; font-weight: 700; white-space: nowrap;
+    box-shadow: 0 8px 20px rgba(56, 91, 67, .2); transition: background .2s, transform .2s;
+}
+.garden-create-link:hover { background: #426a52; color: #fff; transform: translateY(-2px); }
+.garden-back-link {
+    padding: 11px 17px; border: 1.5px solid #cfdcc9; border-radius: 999px;
+    background: #fff; color: #55735c; text-decoration: none; font-weight: 600;
+    white-space: nowrap; transition: border-color .2s, background .2s;
+}
+.garden-back-link:hover { border-color: #9dba9a; background: #f6faf4; }
+
+/* ---------- 镜池独立页 ---------- */
+/* 独立页里弹层常驻展开，不再需要 fixed 遮罩 */
+.mirror-page .mirror-modal { position: static; display: flex; min-height: 100vh; padding: 26px; background: #e9f1e5; }
+.mirror-page-back { position: fixed; left: 22px; bottom: 20px; z-index: 2600; }
+.mirror-page-back a {
+    display: inline-block; padding: 10px 16px; border-radius: 999px;
+    background: rgba(255, 253, 246, .9); color: #47624f; text-decoration: none;
+    font-size: 12.5px; font-weight: 600; box-shadow: 0 6px 18px rgba(40, 62, 44, .16);
+}
+.mirror-page-back a:hover { background: #fff; }
+
+@media (max-width: 700px) {
+    .healing-exhibition { width: calc(100% - 28px); padding: 26px 0 60px; }
+    .exhibition-heading { align-items: flex-start; flex-direction: column; margin-bottom: 26px; }
+    .exhibition-actions { width: 100%; }
+    .mirror-page .mirror-modal { padding: 10px; }
+    .mirror-page-back { left: 12px; bottom: 12px; }
+}
+
+.garden-exhibition .section { margin: 0 0 46px; }
+.garden-exhibition .section h3 { margin: 0 0 18px; padding: 0 0 10px; font: 600 18px 'Georgia','Songti SC',serif; color: #4f7258; border-bottom: 1px solid #dce6d6; }
+.garden-exhibition .creations-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(245px,1fr)); gap:20px; }
+.garden-exhibition .creation-item { min-width:0; overflow:hidden; display:flex; flex-direction:column; border:1px solid #e1e8db; border-radius:18px; background:rgba(255,255,250,.92); box-shadow:0 9px 25px rgba(54,80,55,.08); transition:transform .22s,box-shadow .22s; }
+.garden-exhibition .creation-item:hover { transform:translateY(-4px); box-shadow:0 17px 34px rgba(54,80,55,.14); }
+.garden-exhibition .thumbnail-container { position:relative; height:220px; overflow:hidden; background:#e8eee2; }
+.garden-exhibition .creation-image,.garden-exhibition .threed-preview { display:block; width:100%; height:100%; object-fit:cover; cursor:pointer; transition:transform .35s; }
+.garden-exhibition .creation-item:hover .creation-image,.garden-exhibition .threed-thumbnail:hover .threed-preview { transform:scale(1.035); }
+.garden-exhibition .creation-info { display:flex; flex-wrap:wrap; align-items:center; gap:7px; padding:13px 15px 8px; color:#788575; font-size:12px; }
+.garden-exhibition .creation-date { color:#889181; }
+.garden-exhibition .creation-intent { width:100%; padding:7px 9px; border-left:3px solid #91ad8f; border-radius:5px; background:#f2f6ed; color:#55735b; font-size:12px; }
+.garden-exhibition .creation-intent .ci-label { margin-right:5px; color:#9b8b68; }
+.garden-exhibition .work-interactions { display:flex; gap:8px; padding:3px 14px 14px; }
+.garden-exhibition .interaction-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #e1e8db; border-radius:999px; background:#f8faf4; color:#6c7c69; cursor:pointer; transition:all .18s; }
+.garden-exhibition .interaction-btn:hover { border-color:#abc3a8; background:#eef5ec; transform:translateY(-1px); }
+.garden-exhibition .interaction-btn .icon { font-size:15px; }
+.garden-exhibition .interaction-btn .count { font-size:11px; font-variant-numeric:tabular-nums; }
+.garden-exhibition .interaction-btn.liked { color:#a66e62; background:#fbefeb; border-color:#efd6ce; }
+.garden-exhibition .interaction-btn.collected { color:#a37e48; background:#faf4e6; border-color:#ecdfbd; }
+.garden-exhibition .delete-overlay { position:absolute; top:10px; right:10px; z-index:4; display:grid; place-items:center; width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,.93); box-shadow:0 3px 12px rgba(0,0,0,.14); opacity:0; transform:scale(.9); cursor:pointer; transition:all .2s; }
+.garden-exhibition .thumbnail-container:hover .delete-overlay { opacity:1; transform:scale(1); }
+.garden-exhibition .delete-overlay:hover { background:#f7eae3; }
+.garden-exhibition .delete-icon { font-size:15px; }
+.garden-exhibition .threed-thumbnail { position:relative; width:100%; height:100%; cursor:pointer; overflow:hidden; }
+.garden-exhibition .threed-overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:#fff; background:linear-gradient(transparent,rgba(36,55,42,.35)); }
+.garden-exhibition .play-icon { display:grid; place-items:center; width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,.9); color:#52785c; font-size:20px; box-shadow:0 4px 16px rgba(0,0,0,.18); }
+.garden-exhibition .threed-badge { position:absolute; right:12px; bottom:10px; padding:3px 9px; border-radius:99px; background:rgba(46,76,54,.8); color:#fff; font-size:10px; letter-spacing:.08em; }
+.garden-exhibition .music-player { position:relative; display:grid; place-items:center; width:100%; height:100%; background:radial-gradient(circle,#eef4e8,#d7e5d2); }
+.garden-exhibition .music-icon { width:86px; height:86px; object-fit:cover; border-radius:50%; box-shadow:0 7px 20px rgba(62,94,67,.18); }
+.garden-exhibition .playing-indicator { position:absolute; display:none; width:108px; height:108px; border:2px solid rgba(90,140,95,.5); border-radius:50%; animation:music-pulse 1.8s infinite; }
+.garden-exhibition .playing-indicator.playing { display:block; }
+@keyframes music-pulse { 0%{transform:scale(.8);opacity:.85} 100%{transform:scale(1.28);opacity:0} }
+.garden-exhibition .music-controls { margin-left:auto; padding:6px 12px; border-radius:99px; color:#55795d; background:#edf4e9; cursor:pointer; }
+.garden-exhibition .empty-section { padding:28px; border:1px dashed #cbd8c8; border-radius:16px; text-align:center; color:#879380; background:rgba(255,255,255,.38); }
+.garden-exhibition .empty-section p { margin:0; }
+.garden-exhibition > .garden-create-link { margin:0 auto; }
+
+/* Existing artwork lightbox and 3D-video viewer remain available. */
+.garden-exhibition .modal { display:none; position:fixed; z-index:2100; inset:0; overflow:auto; padding:7vh 20px; background:rgba(23,34,27,.84); }
+.garden-exhibition .modal .modal-content { display:block; width:min(86vw,960px); max-height:82vh; margin:0 auto; object-fit:contain; border-radius:12px; }
+.garden-exhibition .modal .close,.garden-exhibition .modal .close-video { position:fixed; top:20px; right:28px; color:#fff; font-size:36px; cursor:pointer; z-index:2200; }
+.garden-exhibition .modal video { width:min(86vw,960px); max-height:82vh; display:block; margin:0 auto; border-radius:12px; background:#162019; }
+@media(max-width:640px){
+ .garden-exhibition .creations-grid { grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; }
+ .garden-exhibition .thumbnail-container { height:170px; }
+ .garden-exhibition .creation-item { border-radius:14px; }
+ .garden-exhibition .creation-info { padding:10px 11px 6px; }
+ .garden-exhibition .delete-overlay { opacity:1; transform:none; width:30px; height:30px; }
+}

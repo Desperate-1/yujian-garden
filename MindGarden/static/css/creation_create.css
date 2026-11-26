@@ -1,0 +1,66 @@
+.creation-container {
+    max-width: 1040px; margin: 0 auto 6rem; display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px;
+    color: var(--mg-ink);
+}
+.creation-container > h2, .creation-container > :not(.camera-section, .intent-section) { grid-column: 1 / -1; }
+.creation-container > h2 { margin: 0; padding-bottom: 16px; border-bottom: 1px solid; font: 600 clamp(32px,4vw,52px)/1.2 Georgia, SimSun, serif; }
+.creation-container .camera-section { grid-column: 1; grid-row: 2; }
+.creation-container .intent-section { grid-column: 2; grid-row: 2; }
+.creation-container :is(.camera-section,.intent-section,#type-select-section,#preview-section,#result-section,#loading,#skeleton-section) {
+    min-width: 0; padding: clamp(17px,2.5vw,32px); border: 1px solid var(--mg-ink);
+    background: var(--mg-paper); border-radius: 7px; text-align: left;
+}
+.creation-container :is(.camera-section,.intent-section) { align-self: start; }
+.creation-container h3 { margin: 0 0 14px; font: 600 22px/1.4 Georgia, SimSun, serif; }
+.creation-container h4 { margin: 0 0 10px; }
+.creation-container :is(video,#preview-img,#result-img,.skeleton-img) {
+    display: block; max-width: 100%; height: auto; max-height: 55vh; margin: 0 auto; object-fit: contain; border-radius: 4px;
+}
+.creation-container video { width: 100%; background: var(--mg-leaf); }
+.creation-container :is(button:disabled, .file-btn:has(+ input:disabled)) { cursor: not-allowed; border-style: dashed; }
+.camera-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.creation-container :is(.btn-primary,.btn-secondary,.btn-success,.btn,.mood-chip) {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 42px; padding: 8px 16px; color: var(--mg-ink); background: var(--mg-paper);
+    border: 1px solid var(--mg-ink); border-radius: 4px; font: inherit; font-weight: 600;
+    text-decoration: none; cursor: pointer; box-shadow: none;
+}
+.creation-container :is(.btn-primary,.btn-success,.mood-chip.active) { background: var(--mg-ink); color: var(--mg-paper); }
+.creation-container :is(.btn:hover,.btn-primary:hover,.btn-secondary:hover,.btn-success:hover,.mood-chip:hover) { text-decoration: underline; text-underline-offset: 3px; }
+.camera-status, .camera-error { display: none; }
+.camera-status, .camera-error, .intent-hint, .skeleton-desc, .progress-hint {
+    font-size: 14px; line-height: 1.7; margin: 10px 0; color: var(--mg-ink);
+}
+.camera-error { padding: 10px 12px; border-inline-start: 3px solid var(--mg-accent); }
+.intent-label, .mood-title { display: block; margin-bottom: 8px; font-size: 16px; font-weight: 700; }
+.intent-optional { font-size: 12px; font-weight: 400; }
+.intent-input {
+    width: 100%; padding: 10px 13px; border: 1px solid var(--mg-ink); border-radius: 4px;
+    background: var(--mg-paper); color: var(--mg-ink); font: inherit;
+}
+.intent-input::placeholder { color: var(--mg-ink); }
+.mood-block { margin-top: 20px; padding-top: 17px; border-top: 1px solid var(--mg-leaf); }
+.mood-head, .mood-chips { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.mood-head { margin-bottom: 10px; }
+.creation-container .mood-chip { min-height: 36px; border-radius: 99px; font-size: 13px; }
+.type-radio-group { display: grid; grid-template-columns: repeat(auto-fit,minmax(128px,1fr)); gap: 10px; }
+.type-radio-card { position: relative; cursor: pointer; }
+.type-radio-card input, .creation-container #file-input { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+.type-radio-content {
+    display: flex; height: 100%; padding: 14px 10px; flex-direction: column; gap: 6px;
+    background: var(--mg-paper); border: 1px solid var(--mg-ink); border-radius: 4px;
+}
+.type-icon { font: 24px/1 Georgia, serif; }
+.type-name { font-weight: 700; }
+.type-desc { font-size: 12px; }
+.type-radio-card input:checked + .type-radio-content { background: var(--mg-ink); color: var(--mg-paper); }
+.type-radio-card input:focus-visible + .type-radio-content, .file-btn:has(+ #file-input:focus-visible) { outline: 3px solid var(--mg-accent); outline-offset: 3px; }
+.progress-track { height: 12px; overflow: hidden; border: 1px solid var(--mg-ink); border-radius: 99px; background: var(--mg-sand); }
+.progress-bar { width: 0; height: 100%; background: var(--mg-ink); transition: width .3s; }
+.progress-meta { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+#result-section p { margin: 12px 0; }
+@media (max-width: 750px) {
+    .creation-container { grid-template-columns: 1fr; gap: 14px; }
+    .creation-container .intent-section, .creation-container .camera-section { grid-column: 1; grid-row: auto; }
+}

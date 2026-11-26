@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}风格大厅 · 愈见花园{% endblock %}
+{% block nav %}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/garden_home.css') }}">
+{% set periods = {'cute': ('morning', '清晨', '晨日动漫'), 'fresh': ('noon', '正午', '云汀水院'), 'ugly': ('night', '入夜', '月下花园')} %}
+<main class="home-garden" id="homeGarden" data-period="{{ periods[g_theme][0] }}">
+    <div class="lobby-landscape" aria-hidden="true">
+        {% for ink in ['leaf', 'ink', 'petal', 'paper', 'cloud'] %}
+        <i class="lobby-cut lobby-cut-{{ ink }}"
+           style="--wide-cut:url('{{ url_for('static', filename='garden/lobby/wide-' ~ ink ~ '-mask.png') }}');--tall-cut:url('{{ url_for('static', filename='garden/lobby/tall-' ~ ink ~ '-mask.png') }}');--cut-color:var(--{{ ink }})"></i>
+        {% endfor %}
+    </div>
+    <div class="lobby-stars" aria-hidden="true">
+        {% for x, y, size in [(7,29,5),(23,9,4),(28,24,7),(32,19,3),(42,13,4),(54,24,5),(63,8,3),(68,21,8),(73,26,3),(85,37,6),(91,13,5),(12,46,3),(55,4,3),(36,36,3),(78,42,4),(94,28,3)] %}
+        <i style="left:{{ x }}%;top:{{ y }}%;--size:{{ size }}px"></i>
+        {% endfor %}
+    </div>
+    <div id="lobbySunAnchor" class="lobby-sun" aria-hidden="true"></div>
+    <canvas id="lobbyMeadow" aria-hidden="true"></canvas>
+
+    <header class="lobby-header">
+        <a class="lobby-brand" href="{{ url_for('home') }}" aria-label="愈见花园 首页">愈见花园</a>
+        <span class="lobby-location">风格大厅</span>
+        {% if not current_user.is_authenticated %}
+        <a class="home-login" href="{{ url_for('auth.login') }}">已有账号？登录</a>
+        {% endif %}
+    </header>
+    <section class="lobby-title" aria-labelledby="gardenTitle">
+        <h1 id="gardenTitle" aria-label="愈见花园"><span>愈</span><span>见</span><span>花</span><span>园</span></h1>
+        <p>选一段喜欢的天光，走进你的花园。</p>
+    </section>
+    <div class="theme-picker-cards" role="group" aria-label="选择时段与花园风格">
+        {% for key, view in periods.items() %}
+        <button type="button" class="theme-card{{ ' is-active' if key == g_theme else '' }}"
+                style="--stamp-shape:url('{{ url_for('static', filename='garden/lobby/oval-' ~ view[0] ~ '-shape.png') }}');--stamp-edge:url('{{ url_for('static', filename='garden/lobby/oval-' ~ view[0] ~ '-edge.png') }}')"
+                data-theme-choice="{{ key }}" data-cover="{{ url_for('static', filename='garden/illustrated/' ~ key ~ '/entrance.webp') }}"
+                aria-pressed="{{ 'true' if key == g_theme else 'false' }}">
+            <span class="tc-time">{{ view[1] }}</span>
+            <span class="tc-name">{{ view[2] }}</span>
+        </button>
+        {% endfor %}
+    </div>
+    <div class="home-actions">
+        <a class="home-enter" {% if current_user.is_authenticated %}id="enterGarden" href="{{ url_for('creation.garden') }}"{% else %}href="{{ url_for('auth.register') }}"{% endif %}>
+            <span>开始游园</span><i aria-hidden="true"></i>
+        </a>
+        <p id="lobbyStatus" role="status" aria-live="polite"></p>
+    </div>
+</main>
+<script defer src="{{ url_for('static', filename='js/lobby_meadow.js') }}"></script>
+{% endblock %}

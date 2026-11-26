@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}日记详情 - 愈见花园{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/journal_detail.css') }}">
+<div class="journal-detail">
+    <h2>日记详情 - {{ journal.created_at.strftime('%Y-%m-%d') }}</h2>
+
+    <div class="detail-card">
+        <div class="detail-header">
+            <span class="emotion-score">情绪分数: {{ '%.2f' | format(journal.emotion_score | float) if journal.emotion_score is not none else '暂无记录' }}</span>
+            <span class="created-at">记录时间: {{ journal.created_at.strftime('%H:%M') }}</span>
+        </div>
+
+        {# ===== 情绪解读 =====
+           展示"分数是怎么来的"：情绪标签 + 判断理由。
+           旧日记（本次改动前写入的）没有这些字段，用 if 兜住，不显示空区块。 #}
+        {% set tags = (journal.emotion_tags or '').split(',') %}
+        {% set tags = tags | map('trim') | reject('equalto', '') | list %}
+        {% if tags or journal.emotion_reason %}
+        <div class="emotion-explain">
+            <div class="emotion-explain-label">这条日记被读到的情绪</div>
+            {% for t in tags %}
+                <span class="emotion-tag {{ 'tag-low' if journal.emotion_score is not none and journal.emotion_score < 0.35 else '' }}">{{ t }}</span>
+            {% endfor %}
+            {% if journal.emotion_reason %}
+            <p class="emotion-reason">{{ journal.emotion_reason }}</p>
+            {% endif %}
+            {% if journal.risk_level in ('concern', 'crisis') %}
+            <div class="risk-note">
+                <span>🌿</span>
+                <span>这段文字让我们有些在意。如果最近一直不太好受，找人聊聊会好一些 —— 你不需要一个人扛。</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="content-box">
+            {{ journal.content }}
+        </div>
+    </div>
+
+    <a href="{{ url_for('journal.index') }}" class="btn-back">返回日记列表</a>
+</div>
+{% endblock %}

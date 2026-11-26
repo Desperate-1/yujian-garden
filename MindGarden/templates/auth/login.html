@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}登录 · 愈见花园{% endblock %}
+{% block nav %}
+<header class="lobby-header auth-header">
+    <a class="auth-brand" href="{{ url_for('home') }}"><i aria-hidden="true">✿</i> 愈见花园</a>
+    <a class="auth-return" href="{{ url_for('home') }}">← 风格大厅</a>
+</header>
+{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/garden_register.css') }}">
+<main class="garden-register">
+    <section class="auth-container register-card" aria-labelledby="authTitle">
+        {% block auth_form %}
+        <h1 id="authTitle">欢迎回来</h1>
+        <form method="post">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" autocomplete="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" autocomplete="current-password" required>
+            </div>
+            <label class="auth-remember" for="remember">
+                <input type="checkbox" id="remember" name="remember"> 记住我
+            </label>
+            <button type="submit" class="btn-primary">登录 <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="auth-link">还没有账号？ <a href="{{ url_for('auth.register') }}">创建我的花园</a></p>
+        {% endblock %}
+    </section>
+    <figure class="auth-art" aria-hidden="true">
+        <img src="{{ url_for('static', filename='garden/entrance/' ~ g_theme ~ '.png') }}" alt="">
+    </figure>
+</main>
+{% endblock %}

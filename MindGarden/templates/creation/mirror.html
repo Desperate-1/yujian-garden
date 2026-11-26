@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}心灵喷泉 · 愈见花园{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/creation_gallery.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fountain_hall.css') }}">
+<main class="mirror-page fountain-hall">
+    {# 跳舞大厅背景：优先当前风格素材（garden/themes/<风格>/near/fountain_hall.png），
+       缺图时只剩 CSS 渐变与光斑，效果依然成立 #}
+    <div class="hall-bg" aria-hidden="true"
+         style="background-image:url('{{ url_for('static', filename='garden/illustrated/' ~ g_theme ~ '/hall.webp') }}')"></div>
+
+    <!-- 心灵喷泉 · 跳舞大厅：本地摄像头实时姿态驱动 -->
+    <div class="mirror-modal is-open" id="bearMirrorModal" role="dialog" aria-modal="true" aria-labelledby="mirrorTitle" aria-hidden="false">
+        {% include '_garden_return.html' %}
+        <div class="mirror-dialog">
+            <div class="mirror-heading">
+                <span class="garden-eyebrow">THE SOUL FOUNTAIN · DANCE HALL</span>
+                <h2 id="mirrorTitle">喷泉边的跳舞大厅 <span>✧</span></h2>
+                <p>挑一个合眼缘的小伙伴，它会照着你的动作一起跳。摄像头画面只在本机浏览器处理，不上传、不保存。</p>
+            </div>
+
+            {# ── 舞伴选择器：程序化木偶，切换即换角色（localStorage 记住选择）── #}
+            <div class="buddy-picker" role="group" aria-label="选择舞伴">
+                <span class="buddy-picker-label">选择你的舞伴</span>
+                <div class="buddy-chips" id="buddyChips">
+                    <button type="button" class="buddy-chip" data-char="bear">
+                        <span class="buddy-emoji" aria-hidden="true">🐻</span>
+                        <span class="buddy-name">豆豆</span>
+                        <span class="buddy-kind">小熊</span>
+                    </button>
+                    <button type="button" class="buddy-chip" data-char="blob">
+                        <span class="buddy-emoji" aria-hidden="true">🫠</span>
+                        <span class="buddy-name">歪歪</span>
+                        <span class="buddy-kind">小怪兽</span>
+                    </button>
+                    <button type="button" class="buddy-chip" data-char="deer">
+                        <span class="buddy-emoji" aria-hidden="true">🦌</span>
+                        <span class="buddy-name">芽芽</span>
+                        <span class="buddy-kind">小鹿</span>
+                    </button>
+                    {# 混元 3D 生成的立体歪歪：点开可以转着看（惰性加载，不影响跟跳） #}
+                    <button type="button" class="buddy-chip blob3d-chip" id="blob3dOpenBtn">
+                        <span class="buddy-emoji" aria-hidden="true">◇</span>
+                        <span class="buddy-name">3D 歪歪</span>
+                        <span class="buddy-kind">转着看看</span>
+                    </button>
+                </div>
+            </div>
+
+            {# ── 模式选择：舞厅预览（现有跟跳）/ 舞动起来！（节奏游戏）── #}
+            <div class="dance-mode-picker game-ui" id="danceModePicker" role="group" aria-label="选择玩法">
+                <span class="buddy-picker-label">选择玩法</span>
+                <div class="dance-mode-cards">
+                    <button type="button" class="dance-mode-card is-active" data-mode="preview">
+                        <span class="dance-mode-emoji" aria-hidden="true">◉</span>
+                        <span class="dance-mode-name">舞厅预览</span>
+                        <span class="dance-mode-desc">自由跟跳，小伙伴照着你的动作一起动</span>
+                    </button>
+                    <button type="button" class="dance-mode-card" data-mode="dance">
+                        <span class="dance-mode-emoji" aria-hidden="true">♫</span>
+                        <span class="dance-mode-name">舞动起来！</span>
+                        <span class="dance-mode-desc">跟着领舞跳，圆圈收缩前完成动作拿分</span>
+                    </button>
+                </div>
+                <div class="dance-track-row" id="danceTrackRow" hidden>
+                    <label for="danceTrackSelect">{{ '选一首歌' if g_theme == 'cute' else '练习方式' }}</label>
+                    <select id="danceTrackSelect"></select>
+                    <button type="button" class="dance-start-btn" id="danceStartBtn">开始跳舞</button>
+                </div>
+            </div>
+
+            <div class="mirror-stage-grid" id="mirrorStageGrid">
+                <div class="mirror-camera-card">
+                    <div class="mirror-view-label"><span><i class="live-dot"></i>你的动作</span></div>
+                    <div class="mirror-video-wrap">
+                        <video id="gardenCamera" autoplay muted playsinline></video>
+                        <canvas id="poseOverlay"></canvas>
+                        <div class="photo-countdown" id="photoCountdown" hidden>3</div>
+                        <div class="camera-placeholder" id="cameraPlaceholder">
+                            <span>✧</span><strong>准备好时，走进跳舞大厅</strong><small>建议光线明亮、全身入镜</small>
+                        </div>
+                    </div>
+                    <div class="camera-controls">
+                        <button type="button" class="camera-start" id="startCamera">开启摄像头</button>
+                        <button type="button" class="camera-stop" id="stopCamera" disabled>关闭</button>
+                        <button type="button" class="camera-start photo-shoot-btn" id="photoShootBtn" disabled>拍一张</button>
+                        <button type="button" class="gesture-toggle" id="gesturePhotoToggle" hidden
+                                aria-pressed="true" title="对着摄像头比个 OK 手势，保持一下就会自动倒数拍照"> 手势拍照·开</button>
+                        <span class="photo-voice-hint" id="photoVoiceHint" hidden>说「茄子」也可以拍</span>
+                        <span id="poseStatus" class="pose-status" aria-live="polite">等待你走进跳舞大厅</span>
+                    </div>
+                </div>
+
+                {# ── 领舞视口：仅「舞动起来！」模式显示（中间栏）── #}
+                <div class="dance-lead-card game-ui" id="danceLeadCard" hidden>
+                    <div class="mirror-view-label dance-view-label"><span><i class="live-dot lead-dot"></i>领舞 · 小暖老师</span></div>
+                    <div class="dance-lead-stage">
+                        <canvas id="danceStage" aria-label="领舞示范画面"></canvas>
+                    </div>
+                    <div class="dance-lead-caption"><span>✦</span> 跟着她做动作，圆圈缩到最小时摆好姿势</div>
+                </div>
+
+                <div class="bear-stage-card">
+                    <div class="mirror-view-label"><span id="buddyFollowLabel">小伙伴正在跟随你</span><span class="tracking-badge" id="trackingBadge">待机</span></div>
+                    <div class="bear-stage" id="bearStage">
+                        <div class="bear-stage-glow"></div>
+                        <canvas id="bearCanvas" aria-label="由你的实时姿态驱动的 3D 小伙伴"></canvas>
+                        <div class="bear-idle-fallback" id="bearIdleFallback" aria-hidden="true">🐻</div>
+                        <div class="bear-stage-hint" id="bearHint">打开摄像头后，小伙伴会尝试复刻你的身体姿势</div>
+                    </div>
+                    <div class="bear-caption"><span>✦</span> 轻轻伸展就好，不必追求标准动作</div>
+                </div>
+            </div>
+
+            {# ── 游戏 HUD：分数 / 连击 / 判定反馈 ── #}
+            <div class="dance-hud game-ui" id="danceHud" hidden>
+                <div class="dance-hud-item"><span class="dance-hud-label">分数</span><strong id="danceScore">0</strong></div>
+                <div class="dance-hud-item"><span class="dance-hud-label">连击</span><strong id="danceCombo">0</strong></div>
+                <div class="dance-hud-judge" id="danceJudge" aria-live="polite"></div>
+                <button type="button" class="dance-quit-btn" id="danceQuitBtn">结束本局</button>
+            </div>
+
+            {# ── 结算面板：本局分数 + 历史排行榜 ── #}
+            <div class="dance-result game-ui" id="danceResult" hidden>
+                <div class="dance-result-card">
+                    <h3>本局结束</h3>
+                    <div class="dance-result-score"><strong id="resultScore">0</strong><span>分</span></div>
+                    <p class="dance-result-sub" id="resultSub"></p>
+                    <div class="dance-result-board">
+                        <div class="dance-board-col">
+                            <h4>全站排行榜</h4>
+                            <table><thead><tr><th>#</th><th>舞者</th><th>曲目</th><th>分数</th><th>日期</th></tr></thead>
+                            <tbody id="boardTopBody"></tbody></table>
+                        </div>
+                        <div class="dance-board-col">
+                            <h4>我的最好成绩</h4>
+                            <table><thead><tr><th>曲目</th><th>分数</th><th>日期</th></tr></thead>
+                            <tbody id="boardMineBody"></tbody></table>
+                        </div>
+                    </div>
+                    <div class="dance-result-actions">
+                        <button type="button" class="dance-start-btn" id="danceAgainBtn">再来一局</button>
+                        <button type="button" class="dance-quit-btn" id="danceBackBtn">返回选择</button>
+                    </div>
+                </div>
+            </div>
+
+            {# ── 拍照预览卡：重拍 / 存到本地 / 带去疗愈回廊创作 ── #}
+            <div class="photo-preview game-ui" id="photoPreview" hidden>
+                <div class="photo-preview-card">
+                    <h3>咔嚓！这张 pose 定格啦</h3>
+                    <div class="photo-preview-img-wrap">
+                        <img id="photoPreviewImg" alt="刚拍下的 pose 照片">
+                    </div>
+                    <div class="photo-preview-actions">
+                        <button type="button" class="dance-quit-btn" id="photoCancelBtn">✕ 不想拍了</button>
+                        <button type="button" class="dance-quit-btn" id="photoRetakeBtn">↻ 重拍</button>
+                        <button type="button" class="dance-quit-btn" id="photoSaveBtn">⬇ 存到本地</button>
+                        <button type="button" class="dance-start-btn" id="photoToGalleryBtn">带去疗愈回廊创作 →</button>
+                    </div>
+                    <p class="photo-preview-hint">照片只存在你的浏览器里，不上传、不留档</p>
+                </div>
+            </div>
+
+            {# ── 3D 歪歪展示位：混元生3D 的 GLB，惰性加载、可拖动旋转 ── #}
+            <div class="blob3d-viewer game-ui" id="blob3dViewer" hidden>
+                <div class="blob3d-card">
+                    <button type="button" class="blob3d-close" id="blob3dCloseBtn" aria-label="关闭 3D 预览">×</button>
+                    <div class="blob3d-stage">
+                        <canvas id="blob3dCanvas"></canvas>
+                        <div class="blob3d-loading" id="blob3dLoading" hidden>正在唤醒 3D 歪歪…</div>
+                    </div>
+                    <p class="blob3d-caption"><span>✦</span> 混元 3D 生成的立体「歪歪」 · 按住拖动可以转着看</p>
+                </div>
+            </div>
+
+            <div class="mirror-footnote">实时姿态识别由本地 MediaPipe 执行 · 摄像头权限仅在你主动开启后请求</div>
+        </div>
+    </div>
+
+
+</main>
+<script>
+  // 当前风格交给角色系统：三套风格各有一只默认舞伴（可在页面上改选）
+  window.MG_THEME = {{ g_theme | tojson }};
+</script>
+<script type="module" src="{{ url_for('static', filename='js/garden_pose.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/dance_game.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/blob_viewer.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/fountain_photo.js') }}"></script>
+{% endblock %}

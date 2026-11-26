@@ -1,0 +1,20 @@
+<div id="sceneGuide" data-page="{{ request.endpoint }}" data-reader="{{ current_user.get_id() if current_user.is_authenticated else 'guest' }}">
+    <button type="button" class="sg-launch" id="sgLaunch" aria-controls="sgCard" aria-expanded="false" hidden>
+        <span class="sg-book" aria-hidden="true"></span>操作指引
+    </button>
+    <section class="sg-card" id="sgCard" aria-label="操作指引" hidden>
+        <div class="sg-top">
+            <div class="sg-byline"><span class="sg-book" aria-hidden="true"></span><span id="sgLabel"></span></div>
+            <button type="button" id="sgSkip" aria-label="跳过本页引导">跳过</button>
+        </div>
+        <div class="sg-copy" aria-live="polite" aria-atomic="true">
+            <h2 id="sgTitle"></h2>
+            <p id="sgDescription"></p>
+        </div>
+        <div class="sg-bottom">
+            <span class="sg-count" id="sgCount"></span>
+            <button type="button" id="sgBack" aria-label="上一步">上一步</button>
+            <button type="button" id="sgNext">下一步</button>
+        </div>
+    </section>
+</div>

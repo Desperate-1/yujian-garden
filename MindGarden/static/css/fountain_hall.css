@@ -1,0 +1,617 @@
+/* ================================================================
+   心灵喷泉 · 跳舞大厅
+   ----------------------------------------------------------------
+   覆盖 creation_gallery.css 里的旧镜池样式：
+   全屏大厅背景 + 舞伴选择器 + 舞台灯光。三套风格通过
+   [data-theme] 变量自动换色（变量定义在 themes.css）。
+   ================================================================ */
+
+body:has(.fountain-hall) { background: var(--t-body-bg, #f2f4e8); }
+body:has(.fountain-hall) .content { max-width: none; margin: 0; padding: 0; }
+body:has(.fountain-hall) nav { display: none; }
+
+.fountain-hall { position: relative; min-height: 100vh; min-height: 100dvh; }
+
+/* 大厅背景图（缺图时纯渐变也成立） */
+.hall-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-size: cover;
+    background-position: center;
+    pointer-events: none;
+}
+/* 没有背景图时的渐变兜底 + 柔光 */
+.fountain-hall::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(255, 250, 220, .55), transparent 55%),
+        linear-gradient(180deg, var(--sage-pale, #eef3e6) 0%, var(--cream, #f4f2e4) 60%, var(--sage-light, #dfe8d2) 100%);
+    pointer-events: none;
+}
+/* 有背景图时压一层柔光保证可读性（背景图加载成功会盖住渐变，这层统一柔化） */
+.hall-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.05) 40%, rgba(60,70,50,.18));
+    backdrop-filter: blur(2px);
+}
+
+/* 弹层改为透明，让大厅背景透出来 */
+.fountain-hall .mirror-modal {
+    background: transparent;
+    backdrop-filter: none;
+}
+.fountain-hall .mirror-dialog {
+    background: linear-gradient(145deg, rgba(255, 253, 247, .92), rgba(244, 240, 226, .88));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, .8);
+}
+
+/* ---------- 舞伴选择器 ---------- */
+.buddy-picker {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+.buddy-picker-label {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .16em;
+    color: var(--text-muted, #8a9688);
+}
+.buddy-chips { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.buddy-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px 8px 10px;
+    border: 2px solid var(--border-light, #e5eadf);
+    border-radius: 999px;
+    background: var(--card-bg, #fff);
+    font: inherit;
+    cursor: pointer;
+    transition: transform .2s, border-color .2s, box-shadow .2s;
+}
+.buddy-chip:hover { transform: translateY(-2px); box-shadow: var(--shadow-md, 0 4px 14px rgba(0,0,0,.1)); }
+.buddy-chip.is-active {
+    border-color: var(--sage);
+    background: var(--sage-light, #eef5f0);
+    box-shadow: 0 6px 16px rgba(60, 90, 70, .16);
+}
+.buddy-emoji { font-size: 22px; }
+.buddy-name { font-weight: 700; font-size: 14px; color: var(--text, #3d4a3a); }
+.buddy-kind { font-size: 11px; color: var(--text-muted, #8a9688); }
+
+/* ---------- 舞台：舞池灯光 ---------- */
+.fountain-hall .bear-stage {
+    background:
+        radial-gradient(ellipse at 50% 100%, rgba(255, 246, 200, .5), transparent 60%),
+        radial-gradient(ellipse at 20% 0%, rgba(255, 210, 220, .34), transparent 55%),
+        radial-gradient(ellipse at 80% 0%, rgba(190, 220, 255, .34), transparent 55%),
+        radial-gradient(ellipse at 50% 68%, #e2edda 0%, #c6ddc5 50%, #a9c9ba 100%);
+}
+
+/* 三套风格的舞池灯光基调 */
+[data-theme="fresh"] .fountain-hall .bear-stage {
+    background:
+        radial-gradient(ellipse at 50% 100%, rgba(240, 250, 235, .55), transparent 60%),
+        radial-gradient(ellipse at 20% 0%, rgba(200, 235, 225, .4), transparent 55%),
+        radial-gradient(ellipse at 80% 0%, rgba(210, 230, 240, .4), transparent 55%),
+        radial-gradient(ellipse at 50% 68%, #e6f0e4 0%, #c2dcc8 50%, #9ec4b4 100%);
+}
+[data-theme="ugly"] .fountain-hall .bear-stage {
+    background:
+        radial-gradient(ellipse at 50% 100%, rgba(250, 235, 180, .5), transparent 60%),
+        radial-gradient(ellipse at 20% 0%, rgba(200, 180, 230, .3), transparent 55%),
+        radial-gradient(ellipse at 80% 0%, rgba(240, 200, 160, .34), transparent 55%),
+        radial-gradient(ellipse at 50% 68%, #efe6c8 0%, #d8cb98 50%, #b3a67c 100%);
+}
+
+/* 离开大厅的返回链接：浮在大厅背景上也要可读 */
+.fountain-hall .mirror-page-back {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 14px 0 26px;
+}
+.fountain-hall .mirror-page-back a {
+    color: var(--text-soft, #5f7a63);
+    background: rgba(255, 253, 246, .82);
+    padding: 8px 18px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    backdrop-filter: blur(6px);
+}
+.fountain-hall .mirror-page-back a:hover { background: #fff; }
+
+@media (max-width: 700px) {
+    .buddy-picker { gap: 8px; }
+    .buddy-chip { padding: 6px 12px 6px 8px; }
+    .buddy-emoji { font-size: 18px; }
+}
+
+/* ================================================================
+   沉浸共舞模式 —— 摄像头开启后：文字和白卡片全部退场，
+   舞厅背景保留，你的画面和 3D 小伙伴直接在舞厅里一起跳。
+   只留：视频画面、3D 画面、压扁的控制条、右上角退出键。
+   ================================================================ */
+.mirror-modal.is-immersive {
+    padding: 0;
+    background: rgba(15, 18, 12, .18);   /* 只压一点点暗角，舞厅背景照样看得见 */
+    backdrop-filter: none;
+}
+
+.mirror-modal.is-immersive .mirror-dialog {
+    width: 100vw;
+    max-width: none;
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+    border: 0;
+    padding: clamp(12px, 2vw, 24px);
+    display: flex;
+    flex-direction: column;
+    background: transparent;             /* 白卡片背景退场，舞厅透出来 */
+    box-shadow: none;
+    overflow: hidden;
+}
+
+/* 退场：标题、舞伴选择器、底部说明、卡片标签与小贴士 */
+.mirror-modal.is-immersive .mirror-heading,
+.mirror-modal.is-immersive .buddy-picker,
+.mirror-modal.is-immersive .mirror-footnote,
+.mirror-modal.is-immersive .mirror-view-label,
+.mirror-modal.is-immersive .bear-caption,
+.mirror-modal.is-immersive .bear-stage-hint { display: none; }
+
+/* 场外"回到花园"链接也藏起来（:has 探测沉浸态） */
+.fountain-hall:has(.mirror-modal.is-immersive) .mirror-page-back { display: none; }
+
+/* 双窗口拉满：卡片去白框，画面直接浮在舞厅上 */
+.mirror-modal.is-immersive .mirror-stage-grid {
+    flex: 1;
+    min-height: 0;
+    gap: clamp(10px, 1.6vw, 20px);
+}
+.mirror-modal.is-immersive .mirror-camera-card,
+.mirror-modal.is-immersive .bear-stage-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+}
+.mirror-modal.is-immersive .mirror-video-wrap,
+.mirror-modal.is-immersive .bear-stage {
+    flex: 1;
+    min-height: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 14px 44px rgba(10, 16, 10, .35);   /* 只给画面本身一点悬浮感 */
+}
+
+/* 控制条压扁变暗，不抢戏但始终够得着 */
+.mirror-modal.is-immersive .camera-controls {
+    margin-top: 8px;
+    padding: 6px 10px;
+    gap: 8px;
+    background: rgba(0, 0, 0, .30);
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+}
+.mirror-modal.is-immersive .pose-status { color: rgba(255, 255, 255, .78); font-size: 12px; }
+
+/* 退出键钉在右上角，永远在最上层 */
+.mirror-modal.is-immersive .mirror-close {
+    position: fixed;
+    right: 16px;
+    top: 14px;
+    z-index: 2600;
+    background: rgba(0, 0, 0, .32);
+    color: #fff;
+    backdrop-filter: blur(6px);
+}
+.mirror-modal.is-immersive .mirror-close:hover { background: rgba(0, 0, 0, .5); }
+
+@media (max-width: 760px) {
+    .mirror-modal.is-immersive .mirror-stage-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   「舞动起来！」节奏游戏
+   ============================================================ */
+
+/* ── 模式选择卡片 ── */
+.dance-mode-picker { margin: 10px 0 4px; }
+.dance-mode-cards { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.dance-mode-card {
+    flex: 1 1 200px;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+    padding: 12px 16px;
+    border-radius: 16px;
+    border: 2px solid var(--border-light, #e5eadf);
+    background: var(--card-bg, #fff);
+    cursor: pointer;
+    text-align: left;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.dance-mode-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md, 0 4px 14px rgba(0,0,0,.1)); }
+.dance-mode-card.is-active { border-color: var(--sage); background: var(--sage-light, #eef5f0); }
+.dance-mode-emoji { font-size: 22px; }
+.dance-mode-name { font-weight: 700; font-size: 15px; color: var(--text, #3d4a3a); }
+.dance-mode-desc { font-size: 12px; color: var(--text-muted, #8a9688); }
+
+.dance-track-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.dance-track-row label { font-size: 13px; font-weight: 600; color: var(--text-soft, #5f7a63); }
+.dance-track-row select {
+    flex: 1 1 220px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    border: 2px solid var(--border-light, #e5eadf);
+    background: var(--card-bg, #fff);
+    color: var(--text, #3d4a3a);
+    font-size: 14px;
+}
+.dance-start-btn {
+    padding: 10px 22px;
+    border: 0; border-radius: 999px;
+    background: var(--sage, #739d78);
+    color: #fff; font-weight: 700; font-size: 14px;
+    cursor: pointer;
+    transition: transform .15s ease, filter .15s ease;
+}
+.dance-start-btn:hover { transform: translateY(-1px); filter: brightness(1.06); }
+.dance-start-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* ── 三栏布局（游戏中）── */
+.mirror-stage-grid.is-three-col { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 1100px) { .mirror-stage-grid.is-three-col { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 760px)  { .mirror-stage-grid.is-three-col { grid-template-columns: 1fr; } }
+
+/* ── 领舞视口卡片 ── */
+.dance-lead-card {
+    display: flex; flex-direction: column;
+    border-radius: 20px;
+    border: 2px solid rgba(255, 214, 102, .55);
+    background: linear-gradient(180deg, rgba(255,246,224,.92), rgba(255,232,214,.88));
+    padding: 12px;
+    box-shadow: 0 10px 34px rgba(120, 80, 20, .14);
+}
+.dance-view-label { color: var(--text-soft, #5f7a63); font-weight: 600; }
+.lead-dot { background: #ffb84d !important; }
+.dance-lead-stage {
+    position: relative;
+    flex: 1; min-height: 320px;
+    border-radius: 16px;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at 50% 88%, rgba(255,214,102,.28), transparent 60%),
+        linear-gradient(180deg, #fff6e6 0%, #ffe9d6 100%);
+}
+#danceStage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.dance-lead-caption { margin-top: 8px; font-size: 12px; color: #a4763a; text-align: center; }
+.dance-lead-caption span { color: #ffb84d; }
+
+/* 沉浸模式下游戏元素保持可见（immersive 规则只隐藏原有装饰） */
+.mirror-modal.is-immersive .dance-lead-card {
+    background: rgba(20, 18, 12, .42);
+    border-color: rgba(255, 214, 102, .45);
+    backdrop-filter: blur(8px);
+}
+.mirror-modal.is-immersive .dance-lead-card .dance-view-label { display: none; }
+.mirror-modal.is-immersive .dance-lead-caption { color: rgba(255, 235, 200, .85); }
+
+/* ── HUD ── */
+.dance-hud {
+    display: flex; align-items: center; gap: 18px;
+    margin-top: 12px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .34);
+    backdrop-filter: blur(8px);
+    color: #fff;
+}
+.dance-hud-item { display: flex; align-items: baseline; gap: 6px; }
+.dance-hud-label { font-size: 12px; opacity: .8; }
+.dance-hud-item strong { font-size: 22px; font-weight: 800; color: #ffd666; min-width: 2ch; }
+.dance-hud-judge { flex: 1; text-align: center; font-size: 20px; font-weight: 800; letter-spacing: 1px; min-height: 26px; }
+.dance-hud-judge.is-good { color: #8de6a1; }
+.dance-hud-judge.is-bad { color: #ff9a8a; }
+.dance-hud-judge.is-pop { animation: danceJudgePop .35s ease; }
+@keyframes danceJudgePop {
+    0% { transform: scale(.6); opacity: 0; }
+    60% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); }
+}
+.dance-quit-btn {
+    padding: 8px 16px;
+    border: 1px solid rgba(255,255,255,.4);
+    border-radius: 999px;
+    background: transparent; color: #fff;
+    font-size: 13px; cursor: pointer;
+}
+.dance-quit-btn:hover { background: rgba(255,255,255,.14); }
+
+/* ── 结算面板 ── */
+.dance-result {
+    position: fixed; inset: 0; z-index: 2500;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(15, 20, 14, .55);
+    backdrop-filter: blur(6px);
+    padding: 20px;
+}
+.dance-result[hidden] { display: none; }
+.dance-result-card {
+    width: min(760px, 100%);
+    max-height: 88vh; overflow-y: auto;
+    border-radius: 24px;
+    background: var(--card-bg, #fff);
+    border: 2px solid var(--border-light, #e5eadf);
+    padding: 28px 30px;
+    text-align: center;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
+}
+.dance-result-card h3 { margin: 0 0 6px; color: var(--text, #3d4a3a); font-size: 22px; }
+.dance-result-score strong { font-size: 56px; font-weight: 800; color: var(--sage, #739d78); }
+.dance-result-score span { font-size: 16px; color: var(--text-muted, #8a9688); margin-left: 4px; }
+.dance-result-sub { margin: 6px 0 18px; font-size: 13px; color: var(--text-muted, #8a9688); }
+.dance-result-board { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; text-align: left; }
+@media (max-width: 640px) { .dance-result-board { grid-template-columns: 1fr; } }
+.dance-board-col h4 { margin: 0 0 8px; font-size: 14px; color: var(--text-soft, #5f7a63); }
+.dance-board-col table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dance-board-col th, .dance-board-col td {
+    padding: 6px 8px;
+    border-bottom: 1px dashed var(--border-light, #e5eadf);
+    color: var(--text, #3d4a3a);
+}
+.dance-board-col th { font-size: 12px; color: var(--text-muted, #8a9688); font-weight: 600; }
+.dance-board-empty { text-align: center; color: var(--text-muted, #8a9688); }
+.dance-result-actions { display: flex; gap: 12px; justify-content: center; margin-top: 20px; }
+.dance-result-actions .dance-quit-btn { border-color: var(--border-light, #e5eadf); color: var(--text-soft, #5f7a63); }
+.dance-result-actions .dance-quit-btn:hover { background: var(--sage-light, #eef5f0); }
+
+/* 游戏进行时隐藏模式选择器之外的干扰项由 immersive 规则负责；
+   这里保证游戏 HUD / 结算不被误隐藏 */
+.mirror-modal.is-immersive .dance-hud { display: flex; }
+
+/* 沉浸模式（摄像头开着）时收起模式选择器，避免遮挡舞台；
+   想换玩法先关摄像头即可回到选择界面 */
+.mirror-modal.is-immersive .dance-mode-picker { display: none; }
+
+
+/* ---------- 舞厅拍照：倒数层 / 拍照按钮 / 预览卡 ---------- */
+.photo-shoot-btn { white-space: nowrap; }
+/* display 样式会盖掉 hidden 属性的默认隐藏，显式补回来 */
+.photo-preview[hidden],
+.photo-countdown[hidden],
+.dance-track-row[hidden],
+.gesture-toggle[hidden],
+.game-ui[hidden] { display: none !important; }
+.photo-voice-hint {
+    font-size: 12px;
+    color: var(--t-ink-soft, #7a8468);
+    background: rgba(255, 255, 255, .72);
+    border-radius: 999px;
+    padding: 4px 12px;
+    white-space: nowrap;
+}
+/* 手势拍照开关：和语音提示同款小胶囊，可点击切换开/关 */
+.gesture-toggle {
+    font-size: 12px;
+    color: var(--t-ink-soft, #7a8468);
+    background: rgba(255, 255, 255, .72);
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 4px 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+}
+.gesture-toggle:hover { background: rgba(255, 255, 255, .9); }
+.gesture-toggle[aria-pressed="false"] { opacity: .62; }
+
+/* 摄像头画面上的 3-2-1 大字 */
+.photo-countdown {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(72px, 16vw, 128px);
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, .45);
+    pointer-events: none;
+}
+.photo-countdown.is-pop { animation: photoCountPop .72s ease; }
+@keyframes photoCountPop {
+    0% { transform: scale(1.6); opacity: 0; }
+    30% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(.92); opacity: .92; }
+}
+
+/* 拍照预览卡：与结算面板同一气质 */
+.photo-preview {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(50, 58, 40, .42);
+    backdrop-filter: blur(6px);
+}
+.photo-preview-card {
+    background: linear-gradient(150deg, rgba(255, 253, 247, .98), rgba(246, 241, 228, .96));
+    border: 1px solid rgba(255, 255, 255, .85);
+    border-radius: 22px;
+    box-shadow: 0 18px 50px rgba(52, 62, 38, .28);
+    padding: 26px 28px 20px;
+    width: min(420px, 92vw);
+    text-align: center;
+    animation: photoCardIn .28s ease;
+}
+@keyframes photoCardIn {
+    0% { transform: translateY(14px) scale(.96); opacity: 0; }
+    100% { transform: none; opacity: 1; }
+}
+.photo-preview-card h3 {
+    margin: 0 0 14px;
+    font-size: 19px;
+    color: var(--t-ink, #3d4a33);
+}
+.photo-preview-img-wrap {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 3px solid #fff;
+    box-shadow: 0 8px 22px rgba(52, 62, 38, .2);
+    margin-bottom: 16px;
+}
+.photo-preview-img-wrap img { display: block; width: 100%; height: auto; }
+.photo-preview-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+/* 预览卡是浅色底：dance-quit-btn 默认白字透明底（为深色遮罩设计），
+   直接放进来会隐形——这里翻成浅绿描边 + 深绿字（同 .dance-result-actions 的翻法） */
+.photo-preview-actions .dance-quit-btn { border-color: var(--border-light, #e5eadf); color: var(--text-soft, #5f7a63); background: rgba(255,255,255,.65); }
+.photo-preview-actions .dance-quit-btn:hover { background: var(--sage-light, #eef5f0); }
+.photo-preview-hint {
+    margin: 14px 0 0;
+    font-size: 12px;
+    color: var(--t-ink-soft, #8a9377);
+}
+
+/* ---------- 3D 歪歪展示位：选舞伴处的入口 + 可旋转查看弹卡 ---------- */
+.blob3d-chip { cursor: zoom-in; }
+.blob3d-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 42;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(50, 58, 40, .42);
+    backdrop-filter: blur(6px);
+}
+.blob3d-card {
+    position: relative;
+    background: linear-gradient(150deg, rgba(255, 253, 247, .98), rgba(246, 241, 228, .96));
+    border: 1px solid rgba(255, 255, 255, .85);
+    border-radius: 22px;
+    box-shadow: 0 18px 50px rgba(52, 62, 38, .28);
+    padding: 18px 18px 12px;
+    width: min(460px, 92vw);
+    text-align: center;
+    animation: photoCardIn .28s ease;
+}
+.blob3d-close {
+    position: absolute;
+    top: 8px; right: 10px;
+    width: 30px; height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .8);
+    color: #6b7460;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 2;
+}
+.blob3d-close:hover { background: #fff; }
+.blob3d-stage {
+    position: relative;
+    height: min(380px, 58vh);
+    border-radius: 16px;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at 50% 88%, rgba(243, 227, 184, .55), transparent 62%),
+        linear-gradient(180deg, #f7f3e6, #eee6cf);
+    border: 3px solid #fff;
+    box-shadow: inset 0 2px 10px rgba(52, 62, 38, .08);
+}
+.blob3d-stage canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+    touch-action: none;
+}
+.blob3d-stage canvas:active { cursor: grabbing; }
+.blob3d-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--t-ink-soft, #8a9377);
+    background: rgba(250, 246, 234, .72);
+}
+.blob3d-loading[hidden] { display: none !important; }
+.blob3d-caption {
+    margin: 12px 0 2px;
+    font-size: 12px;
+    color: var(--t-ink-soft, #8a9377);
+}
+
+/* The illustrated hall, controls and scoring panels share the theme's five
+   printing inks. Video, photographs and the real-time character keep their media colours. */
+html[data-theme] .fountain-hall { color: var(--mg-ink); --t-ink-soft: var(--mg-ink); }
+.fountain-hall::before { background: var(--mg-paper); }
+.fountain-hall .hall-bg::after, .bear-stage-glow, .bear-stage::before { display: none; }
+.fountain-hall .mirror-dialog { border: 1px solid var(--mg-ink); box-shadow: 4px 4px 0 var(--mg-ink); border-radius: 10px; backdrop-filter: none; }
+.fountain-hall .mirror-modal:not(.is-immersive) .mirror-dialog { background: var(--mg-paper); }
+.fountain-hall .mirror-heading { padding-bottom: 15px; border-bottom: 1px solid var(--mg-ink); }
+.fountain-hall .mirror-heading h2 { color: var(--mg-ink); font-weight: 600; }
+.fountain-hall :is(.mirror-heading p,.garden-eyebrow,.mirror-view-label,.camera-placeholder,.camera-placeholder small,.bear-stage-hint,.tracking-badge,.bear-caption,.mirror-footnote,.pose-status,.dance-lead-caption) { color: var(--mg-ink); }
+.fountain-hall .mirror-heading p { font-size: 14px; }
+.fountain-hall :is(.buddy-chip,.dance-mode-card,.mirror-camera-card,.bear-stage-card,.dance-lead-card,.tracking-badge,.camera-stop,.mirror-close,.photo-voice-hint,.gesture-toggle,.blob3d-close) {
+    color: var(--mg-ink); background: var(--mg-paper); border: 1px solid var(--mg-ink); box-shadow: none;
+}
+.fountain-hall :is(.buddy-chip,.dance-mode-card,.mirror-camera-card,.bear-stage-card,.dance-lead-card) { border-radius: 6px; }
+.fountain-hall :is(.buddy-chip.is-active,.dance-mode-card.is-active) { background: var(--mg-sand); border: 2px solid var(--mg-ink); }
+.fountain-hall :is(.dance-mode-name,.buddy-name,.dance-mode-desc,.buddy-kind,.bear-caption span,.dance-lead-caption span) { color: var(--mg-ink); }
+.fountain-hall :is(.buddy-emoji,.dance-mode-emoji) { color: transparent; text-shadow: 0 0 0 var(--mg-ink); }
+.fountain-hall :is(.camera-start,.dance-start-btn,.photo-shoot-btn) { color: var(--mg-paper); background: var(--mg-ink); border: 1px solid var(--mg-ink); }
+.fountain-hall :is(.camera-stop,.camera-start,.gesture-toggle):disabled { background: var(--mg-paper); color: var(--mg-ink); opacity: 1; border: 1px dashed var(--mg-leaf); }
+html[data-theme] .fountain-hall :is(.mirror-video-wrap,.bear-stage,.blob3d-stage,.dance-lead-stage) { background: var(--mg-leaf); }
+.fountain-hall .camera-placeholder { background: var(--mg-sand); }
+.fountain-hall .camera-placeholder[hidden] { display: none; }
+.fountain-hall .bear-stage-hint { inset: auto 8px 8px; padding: 4px 7px; background: var(--mg-paper); border-radius: 4px; }
+.fountain-hall .bear-stage-hint[hidden] { display: none; }
+.fountain-hall .lead-dot, .fountain-hall .live-dot { background: var(--mg-leaf); }
+.fountain-hall .live-dot.is-live { background: var(--mg-accent); }
+.fountain-hall .mirror-modal.is-immersive { background: transparent; }
+.fountain-hall .mirror-modal.is-immersive .mirror-dialog { border: 0; box-shadow: none; border-radius: 0; }
+.fountain-hall .mirror-modal.is-immersive :is(.camera-controls,.mirror-close,.dance-hud) { background: var(--mg-ink); color: var(--mg-paper); backdrop-filter: none; }
+.fountain-hall .mirror-modal.is-immersive .pose-status { color: var(--mg-paper); }
+.fountain-hall .mirror-modal.is-immersive :is(.camera-start,.dance-start-btn,.photo-shoot-btn) { border: 1px solid var(--mg-paper); }
+.fountain-hall :is(.dance-hud,.dance-quit-btn) { background: var(--mg-ink); color: var(--mg-paper); }
+.fountain-hall :is(.dance-hud-judge,.dance-hud-item strong) { color: var(--mg-paper); }
+.fountain-hall .dance-hud-judge.is-good { color: var(--mg-sand); }
+.fountain-hall :is(.dance-result,.photo-preview,.blob3d-viewer) { background: var(--mg-leaf); backdrop-filter: none; }
+.fountain-hall :is(.dance-result-card,.photo-preview-card,.blob3d-card,.blob3d-loading) { background: var(--mg-paper); color: var(--mg-ink); border: 1px solid var(--mg-ink); box-shadow: none; }
+.fountain-hall .photo-countdown { color: var(--mg-paper); text-shadow: 2px 2px 0 var(--mg-ink); }
+@media (max-width: 640px) {
+    .fountain-hall .buddy-chips { display: grid; grid-template-columns: 1fr 1fr; }
+    .fountain-hall .buddy-chip { justify-content: start; }
+    .fountain-hall .dance-mode-cards { flex-wrap: wrap; }
+    .fountain-hall .mirror-modal:not(.is-immersive) .mirror-dialog { padding-bottom: 68px; }
+}

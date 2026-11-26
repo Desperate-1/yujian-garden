@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}树洞日记 · 愈见花园{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/journal_desk.css') }}">
+<main class="desk-page">
+    {# 桌面背景：当前风格有专用素材（near/desk_bg.png）就用，没有就是 CSS 木纹 #}
+    <div class="desk-bg" aria-hidden="true"
+         style="background-image:url('{{ url_for('static', filename='garden/illustrated/' ~ g_theme ~ '/desk.webp') }}')"></div>
+
+    <div class="desk-scene">
+        {# 桌面小物（纯 CSS）：一支铅笔、一片叶子，让桌面有人气 #}
+        <div class="desk-pencil" aria-hidden="true"><i></i></div>
+        <div class="desk-leaf" aria-hidden="true">❧</div>
+
+        <div class="notebook">
+            <div class="nb-rings" aria-hidden="true">
+                {% for _ in range(12) %}<i></i>{% endfor %}
+            </div>
+            <form method="POST" class="nb-form">
+                <div class="nb-pagehead">
+                    <span class="nb-date" id="nbDate"></span>
+                    <span class="nb-hint">慢慢来，想到哪写到哪</span>
+                </div>
+                <textarea name="content" id="content" rows="10" required
+                          placeholder="今天过得怎么样？有什么想说的吗？"
+                          aria-label="日记内容"></textarea>
+                <div class="nb-actions">
+                    <button type="button" id="voice-btn" class="voice-btn">语音输入</button>
+                    <button type="submit" class="nb-save">写好啦，收进树洞 ✦</button>
+                </div>
+            </form>
+        </div>
+
+        <a class="desk-back" href="{{ url_for('journal.index') }}">翻翻以前的日记 →</a>
+
+        {# 小精灵陪伴：趴在桌角陪你写。最近一次剧本里的角色会来，
+           没做过剧本时是默认小精灵「小栖」。JS 在停笔时请他轻声说两句 #}
+        <div class="desk-sprite" id="deskSprite">
+            <div class="sprite-bubble" id="spriteBubble" hidden>
+                <p class="sprite-bubble-text" id="spriteBubbleText"></p>
+                <span class="sprite-typing" id="spriteTyping" hidden aria-hidden="true">
+                    <i></i><i></i><i></i>
+                </span>
+            </div>
+            {# 若治愈女巫跟着来了（有立绘），小精灵的身体就换成她的画像 #}
+            <div class="sprite-body{% if sprite.portrait %} has-portrait{% endif %}"
+                 {% if sprite.portrait %}style="background-image:url('{{ sprite.portrait }}')"{% endif %}
+                 aria-hidden="true">
+                <i class="sprite-sprout"></i>
+                <i class="sprite-eye is-left"></i>
+                <i class="sprite-eye is-right"></i>
+                <i class="sprite-blush is-left"></i>
+                <i class="sprite-blush is-right"></i>
+                <i class="sprite-mouth"></i>
+            </div>
+            <span class="sprite-name">{{ sprite.name }}</span>
+        </div>
+    </div>
+
+<script>
+/* 页眉日期：今天，写成日记本的口吻 */
+(function () {
+    var d = new Date();
+    var week = ['日','一','二','三','四','五','六'][d.getDay()];
+    var el = document.getElementById('nbDate');
+    if (el) el.textContent = d.getFullYear() + ' 年 ' + (d.getMonth()+1) + ' 月 ' + d.getDate() + ' 日 · 星期' + week;
+})();
+
+document.addEventListener('DOMContentLoaded', function() {
+    const contentTextarea = document.getElementById('content');
+    const voiceBtn = document.getElementById('voice-btn');
+
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+
+    voiceBtn.addEventListener('click', toggleRecording);
+
+    async function toggleRecording() {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            await startRecording();
+        }
+    }
+
+    async function startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    sampleRate: 16000,
+                    channelCount: 1,
+                    echoCancellation: false,
+                    noiseSuppression: false
+                }
+            });
+
+            const options = {
+                mimeType: 'audio/webm;codecs=opus',
+                audioBitsPerSecond: 16000
+            };
+
+            mediaRecorder = new MediaRecorder(stream, options);
+
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                console.log('录音停止，数据块数:', audioChunks.length);
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+                console.log('音频 Blob 大小:', audioBlob.size, 'bytes');
+                if (audioBlob.size === 0) {
+                    alert('录音数据为空，请重新录音');
+                    return;
+                }
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.webm');
+
+                try {
+                    const resp = await fetch('/chat/voice-input', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await resp.json();
+                    if (data.text) {
+                        contentTextarea.value += data.text;
+                        // 语音转写出来的字也算"动笔"，让小精灵知道你在写
+                        contentTextarea.dispatchEvent(new Event('input'));
+                    } else {
+                        console.error('语音识别失败:', data.error);
+                        alert('语音识别失败：' + (data.error || '未知错误'));
+                    }
+                } catch (error) {
+                    console.error('语音识别请求失败:', error);
+                    alert('语音识别请求失败，请检查网络连接');
+                }
+            };
+
+            mediaRecorder.start(100);
+            console.log('开始录音...');
+            isRecording = true;
+            voiceBtn.classList.add('recording');
+            voiceBtn.textContent = '⏹️ 停止录音';
+        } catch (error) {
+            console.error('录音失败:', error);
+        }
+    }
+
+    function stopRecording() {
+        if (mediaRecorder && isRecording) {
+            mediaRecorder.stop();
+            isRecording = false;
+            voiceBtn.classList.remove('recording');
+            voiceBtn.textContent = '语音输入';
+
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
+    }
+});
+</script>
+<script id="spritePersona" type="application/json">{{ sprite | tojson }}</script>
+<script src="{{ url_for('static', filename='js/journal_companion.js') }}"></script>
+</main>
+{% endblock %}

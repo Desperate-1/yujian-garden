@@ -1,0 +1,325 @@
+/* All six illustrated sheets use the same 3584 × 2016 artboard. The overlay
+   that receives clicks shares its crop, including on tall screens. */
+body:has(#paperGarden.illustrated-garden), #paperGarden.illustrated-garden {
+    --pg-paper: #fbf2df;
+    --pg-ink: #534143;
+    --pg-leaf: #79845c;
+    --pg-sky: #ebc8ba;
+    --pg-gold: #dcac58;
+    --pg-blossom: var(--pg-sky);
+    --sg-paper: var(--pg-paper);
+    --sg-ink: var(--pg-ink);
+}
+html[data-theme="fresh"] :is(body:has(#paperGarden.illustrated-garden), #paperGarden.illustrated-garden) {
+    --pg-paper: #f4f2df;
+    --pg-ink: #344b43;
+    --pg-leaf: #789277;
+    --pg-sky: #b5d4cd;
+    --pg-gold: #cba459;
+}
+html[data-theme="ugly"] :is(body:has(#paperGarden.illustrated-garden), #paperGarden.illustrated-garden) {
+    --pg-paper: #eeebdc;
+    --pg-ink: #333b50;
+    --pg-leaf: #73847e;
+    --pg-sky: #a7aec9;
+    --pg-gold: #dfb668;
+}
+#paperGarden.illustrated-garden {
+    height: 100vh;
+    height: 100svh;
+    min-height: 450px;
+    display: grid;
+    grid-template-rows: auto minmax(0,1fr) auto;
+    background: var(--pg-paper);
+    border: clamp(5px,.65vw,10px) solid var(--pg-paper);
+    color: var(--pg-ink);
+    isolation: isolate;
+}
+#paperGarden.illustrated-garden .paper-stage {
+    position: relative;
+    container-type: size;
+    min-height: 0;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 10px 13px 11px 14px;
+    background: var(--pg-sky);
+}
+.illustrated-garden .paper-stage::before {
+    content: "";
+    position: absolute;
+    inset: -22px;
+    background: var(--pg-sky) var(--overview-backdrop,none) center / cover no-repeat;
+    filter: blur(18px);
+    opacity: .5;
+    pointer-events: none;
+}
+.illustrated-board, .illustrated-detail-frame {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    isolation: isolate;
+}
+.illustrated-board {
+    /* Very wide windows keep the sun, all four doors and the waterline in view. */
+    width: clamp(177.77778cqh,100cqw,232cqh);
+    aspect-ratio: 16 / 9;
+}
+.illustrated-layer, .illustrated-spots {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.illustrated-layer > img, .illustrated-detail-art {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    pointer-events: none;
+    user-select: none;
+}
+.illustrated-layer[data-layer="sky"]      { z-index: 0; }
+.illustrated-layer[data-layer="gallery"]  { z-index: 1; }
+.illustrated-layer[data-layer="journal"]  { z-index: 2; }
+.illustrated-layer[data-layer="ground"]   { z-index: 3; }
+.illustrated-layer[data-layer="candy"]    { z-index: 4; }
+.illustrated-layer[data-layer="fountain"] { z-index: 5; }
+.illustrated-spots { z-index: 6; }
+.illustrated-garden .g3d-live-art {
+    position: absolute;
+    display: block;
+    pointer-events: none;
+}
+
+/* A wide hit area stays reliable even when the little printed door is tiny.
+   The glint is attached to the doorway or the waterline within that area. */
+.illustrated-garden .illustrated-hotspot, .illustrated-garden .illustrated-object {
+    position: absolute;
+    translate: -50% -50%;
+    box-sizing: border-box;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    color: var(--pg-ink);
+    pointer-events: auto;
+    cursor: pointer;
+    touch-action: manipulation;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.illustrated-hotspot {
+    left: var(--spot-x);
+    top: var(--spot-y);
+    width: var(--spot-w);
+    height: var(--spot-h);
+    --rim-x: 50%;
+    --rim-y: 66%;
+    --rim-w: 27%;
+    --rim-h: 43%;
+    --rim-shape: 49% 50% 17% 16% / 49% 53% 13% 12%;
+}
+.illustrated-hotspot[data-place="candy"] {
+    --spot-x: 28%; --spot-y: 70%; --spot-w: 20%; --spot-h: 35%;
+    --rim-x: 63.5%; --rim-y: 70.5%; --rim-w: 17%; --rim-h: 32%;
+}
+.illustrated-hotspot[data-place="journal"] {
+    --spot-x: 50.4%; --spot-y: 57.6%; --spot-w: 14%; --spot-h: 22%;
+    --rim-y: 82%; --rim-w: 25%; --rim-h: 37%; --rim-shape: 52% 46% 43% 45%;
+}
+.illustrated-hotspot[data-place="gallery"] {
+    --spot-x: 22.4%; --spot-y: 36.5%; --spot-w: 16%; --spot-h: 37%;
+    --rim-y: 12%; --rim-w: 25.5%; --rim-h: 21.9%; --rim-shape: 50%;
+}
+.illustrated-hotspot[data-place="fountain"] {
+    --spot-x: 74.3%; --spot-y: 66.7%; --spot-w: 18%; --spot-h: 30%;
+    --rim-y: 62%; --rim-w: 88%; --rim-h: 22.8%; --rim-shape: 50%;
+}
+html[data-theme="fresh"] .illustrated-hotspot[data-place="journal"] { --spot-x: 51%; --spot-y: 58.2%; }
+html[data-theme="fresh"] .illustrated-hotspot[data-place="gallery"] {
+    --spot-x: 23.8%; --spot-y: 45.3%; --spot-w: 15%; --spot-h: 19.6%;
+    --rim-y: 40%; --rim-w: 13.7%; --rim-h: 15.7%;
+}
+html[data-theme="fresh"] .illustrated-hotspot[data-place="fountain"] {
+    --spot-x: 72.9%; --spot-y: 66%; --rim-y: 34.8%; --rim-w: 64.5%; --rim-h: 9.4%;
+}
+html[data-theme="ugly"] .illustrated-hotspot[data-place="candy"] { --rim-x: 59.5%; --rim-y: 72%; --rim-w: 21%; }
+html[data-theme="ugly"] .illustrated-hotspot[data-place="journal"] { --spot-x: 54%; --spot-y: 48%; --rim-y: 78%; }
+html[data-theme="ugly"] .illustrated-hotspot[data-place="gallery"] {
+    --spot-x: 20%; --spot-y: 48.2%; --spot-w: 14.5%; --spot-h: 23%;
+    --rim-x: 46.8%; --rim-y: 38.2%; --rim-w: 17.5%; --rim-h: 21.9%;
+}
+html[data-theme="ugly"] .illustrated-hotspot[data-place="fountain"] {
+    --spot-x: 67.1%; --spot-y: 74.6%; --spot-w: 13%; --spot-h: 22%;
+    --rim-y: 65%; --rim-w: 67%; --rim-h: 15.8%;
+}
+.illustrated-hotspot::before, .illustrated-hotspot::after {
+    content: "";
+    position: absolute;
+    left: var(--rim-x);
+    pointer-events: none;
+}
+.illustrated-hotspot::before {
+    top: var(--rim-y);
+    width: var(--rim-w);
+    height: var(--rim-h);
+    translate: -50% -50%;
+    border-radius: var(--rim-shape);
+    border: 1px solid color-mix(in srgb, var(--pg-gold) 58%, var(--pg-paper));
+    box-shadow: 0 0 1px 1px color-mix(in srgb,var(--pg-ink) 38%,transparent),
+                0 0 8px 2px color-mix(in srgb,var(--pg-gold) 68%,transparent);
+    opacity: .72;
+}
+.illustrated-hotspot::after {
+    left: calc(var(--rim-x) + var(--rim-w) * .38);
+    top: calc(var(--rim-y) - var(--rim-h) * .35);
+    width: clamp(7px,.75vw,13px);
+    aspect-ratio: .78;
+    background: var(--pg-paper);
+    clip-path: polygon(48% 0,60% 34%,100% 48%,60% 57%,46% 100%,36% 61%,0 48%,37% 40%);
+}
+.illustrated-marker {
+    position: absolute;
+    left: 50%;
+    top: calc(var(--rim-y) + var(--rim-h) * .5 + 7px);
+    translate: -50% 0;
+    padding: .28em .68em;
+    border: 1px solid var(--pg-gold);
+    border-radius: 4px 7px 5px 6px;
+    background: var(--pg-paper);
+    box-shadow: 0 2px 5px color-mix(in srgb,var(--pg-ink) 18%,transparent);
+    color: var(--pg-ink);
+    font: 650 clamp(12px,1vw,16px)/1.4 "Microsoft YaHei UI","PingFang SC",sans-serif;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+}
+.illustrated-hotspot:is(:hover,:focus-visible) { z-index: 2; }
+.illustrated-hotspot:is(:hover,:focus-visible)::before,
+.illustrated-hotspot:is(:hover,:focus-visible) .illustrated-marker { opacity: 1; }
+.illustrated-hotspot:focus-visible, .illustrated-object:focus-visible {
+    outline: 2px dashed var(--pg-paper);
+    outline-offset: 1px;
+    border-radius: 12%;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .illustrated-hotspot::after { animation: illustrated-glint 3.6s ease-in-out infinite; }
+    .illustrated-hotspot[data-place="gallery"]::after { animation-delay: -.7s; }
+    .illustrated-hotspot[data-place="journal"]::after { animation-delay: -1.7s; }
+    .illustrated-hotspot[data-place="fountain"]::after { animation-delay: -2.5s; }
+    .illustrated-marker { transition: opacity .16s; }
+}
+@keyframes illustrated-glint {
+    0%,100% { opacity: .38; transform: scale(.7); }
+    52% { opacity: .96; transform: scale(1.07); }
+}
+
+.illustrated-detail {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--pg-paper);
+}
+.illustrated-detail::before {
+    content: "";
+    position: absolute;
+    inset: -18px;
+    background: var(--pg-sky) var(--detail-backdrop,none) center / cover no-repeat;
+    filter: blur(17px);
+    opacity: .66;
+    pointer-events: none;
+}
+.illustrated-detail-frame {
+    width: min(100cqw,150cqh);
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    background: var(--pg-paper);
+    box-shadow: 0 0 18px color-mix(in srgb,var(--pg-ink) 22%,transparent);
+}
+.illustrated-detail-art { position: absolute; inset: 0; }
+.illustrated-object {
+    left: var(--object-x,50%);
+    top: var(--object-y,50%);
+    width: var(--object-w,18%);
+    height: var(--object-h,25%);
+}
+#paperGarden .illustrated-object[data-object="fountain"] {
+    /* The legacy dance button shares its class with this invisible water target. */
+    background: transparent;
+    box-shadow: none;
+}
+.illustrated-garden [hidden] { display: none !important; }
+
+@media (max-aspect-ratio: 6/5) {
+    #paperGarden.illustrated-garden {
+        grid-template-rows: auto minmax(0,1fr) auto;
+        min-height: max(480px,calc(74vw + 160px));
+        --portrait-sky: url("../garden/illustrated/cute/sky.webp");
+        --portrait-grass: url("../garden/illustrated/cute/ground.webp");
+    }
+    html[data-theme="fresh"] #paperGarden.illustrated-garden {
+        --portrait-sky: url("../garden/illustrated/fresh/sky.webp");
+        --portrait-grass: url("../garden/illustrated/fresh/ground.webp");
+    }
+    html[data-theme="ugly"] #paperGarden.illustrated-garden {
+        --portrait-sky: url("../garden/illustrated/ugly/sky.webp");
+        --portrait-grass: url("../garden/illustrated/ugly/ground.webp");
+    }
+    #paperGarden.illustrated-garden .paper-stage {
+        width: 100%;
+        aspect-ratio: auto;
+        grid-row: 2;
+        --portrait-board: min(130cqw,177.77778cqh);
+        --meadow-depth: clamp(0px,calc(100cqh - var(--portrait-board) * .5625 - 3cqw),min(24cqh,39cqw));
+        background: var(--pg-sky) var(--portrait-sky) left top / auto max(74%,73cqw) no-repeat;
+    }
+    .illustrated-garden .paper-stage::before {
+        /* Extend the sheet with its own foreground. Only the painted meadow
+           beneath the landmarks is sampled, so a second house never appears. */
+        inset: auto -15% -1px;
+        height: calc(var(--meadow-depth) + 7cqw);
+        opacity: 1;
+        background: linear-gradient(transparent 65%,color-mix(in srgb,var(--pg-paper) 29%,transparent)),
+                    var(--portrait-grass) center bottom / 180% auto no-repeat;
+        filter: none;
+    }
+    .illustrated-board {
+        width: var(--portrait-board);
+        top: calc(100% - var(--meadow-depth) - var(--portrait-board) * .28125);
+        mask-image: linear-gradient(to bottom, transparent, black 7%, black 92%, transparent);
+    }
+    .illustrated-detail-frame {
+        --portrait-frame: max(100cqw,150cqh);
+        width: var(--portrait-frame);
+        box-shadow: none;
+    }
+    .illustrated-detail[data-scene="gallery"] .illustrated-detail-frame {
+        --print-offset: min(calc((var(--portrait-frame) - 100cqw) * .5),calc(var(--portrait-frame) * .27));
+        left: calc(50% + var(--print-offset));
+    }
+    html:is([data-theme="fresh"],[data-theme="ugly"]) [data-scene="gallery"] .illustrated-detail-frame {
+        left: calc(50% - var(--print-offset));
+    }
+    #paperGarden.illustrated-garden .paper-caption { grid-row: 3; align-content: center; }
+}
+@media (max-width: 480px) {
+    .illustrated-garden .paper-header { gap: 6px; padding-inline: 6px; }
+    .illustrated-garden .paper-brand { font-size: clamp(16px,4.9vw,21px); white-space: nowrap; }
+    .illustrated-garden .paper-tools { gap: clamp(5px,1.8vw,8px); }
+    .illustrated-garden .paper-tools summary { font-size: 12px; white-space: nowrap; }
+    .illustrated-garden .paper-tools summary::after { margin-left: 4px; }
+    .illustrated-garden .paper-tools .sg-launch { gap: 3px; padding-inline: 7px; font-size: 12px; white-space: nowrap; }
+}
+@media (max-width: 350px) {
+    .illustrated-garden .paper-header { padding-inline: 4px; }
+    .illustrated-garden .paper-tools .sg-launch { padding-inline: 5px; }
+}
+@media (pointer: coarse) {
+    .illustrated-marker { opacity: 1; }
+    .illustrated-hotspot { min-width: 44px; min-height: 44px; }
+}

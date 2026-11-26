@@ -1,0 +1,12 @@
+* text=auto
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.woff binary
+*.task binary
+*.wasm binary
+*.glb binary
+*.png binary
+*.jpg binary
+*.webp binary
+MindGarden/static/vendor/mediapipe/** -text
+MindGarden/static/js/echarts*.js -text

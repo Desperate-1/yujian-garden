@@ -1,0 +1,528 @@
+/* ============================================================
+   页面样式：chat/history.html
+   从模板内嵌 <style> 抽出，内容与原来完全一致。
+   修改本文件只影响样式，不会影响页面功能，可放心调整。
+   ============================================================ */
+
+/* ========== 语音识别进度条 ========== */
+.stt-progress {
+    margin-top: 10px;
+    padding: 11px 14px;
+    background: #F4F9F8;
+    border: 1px solid #D9EBE8;
+    border-radius: 10px;
+}
+
+.stt-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #3F7A73;
+    margin-bottom: 8px;
+}
+
+.stt-spinner {
+    width: 13px;
+    height: 13px;
+    border: 2px solid #C9E3DF;
+    border-top-color: var(--sage);
+    border-radius: 50%;
+    animation: sttSpin 0.8s linear infinite;
+    flex: 0 0 auto;
+}
+
+@keyframes sttSpin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.stt-percent {
+    margin-left: auto;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.stt-track {
+    height: 6px;
+    background: #E2EFEC;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.stt-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--sage), var(--sage-soft));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+.stt-hint {
+    margin-top: 7px;
+    font-size: 12px;
+    color: #9BB8B3;
+}
+
+/* ========== 全局提示条（语音等操作的结果反馈） ========== */
+#chat-toast {
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    max-width: min(680px, 92vw);
+    padding: 12px 22px;
+    border: 1px solid #E0DCD5;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.7;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    white-space: pre-wrap;
+}
+
+/* ========== 对话容器 ========== */
+.chat-history-container {
+    display: flex;
+    height: calc(100vh - 120px);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    border: 1px solid #EDE9E2;
+    background: #fff;
+}
+
+/* ========== 侧栏 ========== */
+.sessions-sidebar {
+    width: 300px;
+    min-width: 260px;
+    border-right: 1px solid #EDE9E2;
+    background: #FAFAF8;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 18px 16px;
+    border-bottom: 1px solid #EDE9E2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: #3D3D3D;
+}
+
+.new-chat-btn {
+    padding: 7px 16px;
+    background: var(--sage);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.new-chat-btn:hover {
+    background: var(--sage-hover);
+    box-shadow: 0 2px 8px rgba(90,158,150,0.3);
+}
+
+.sessions-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 12px;
+}
+
+/* ========== 会话项 ========== */
+.session-item {
+    padding: 13px 14px;
+    margin-bottom: 6px;
+    background: #fff;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid #EDE9E2;
+    transition: all 0.2s ease;
+    position: relative;            /* 供删除按钮绝对定位 */
+}
+
+/* 会话删除按钮：默认半透明，鼠标移到会话上才明显，避免误触 */
+.session-delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #C0BAB0;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.45;
+    transition: all 0.18s ease;
+    padding: 0;
+}
+
+.session-item:hover .session-delete {
+    opacity: 1;
+}
+
+.session-delete:hover {
+    background: #FBE9E5;
+    color: #D4806E;
+    transform: scale(1.12);
+}
+
+.session-item:hover {
+    background: #E8F4F2;
+    border-color: var(--sage);
+}
+
+.session-item.active {
+    border-color: var(--sage);
+    background: #E8F4F2;
+    box-shadow: 0 0 0 2px rgba(90,158,150,0.12);
+}
+
+.session-item.current-session {
+    border-left: 4px solid var(--sage);
+}
+
+.session-preview {
+    margin-bottom: 6px;
+}
+
+.session-topic {
+    font-size: 14px;
+    color: var(--sage);
+    background: #F2F9F8;
+    padding: 3px 12px;
+    border-radius: 14px;
+    display: inline-block;
+    border: 1px solid #D4E8E5;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+.session-time {
+    font-size: 12px;
+    color: #999;
+    display: block;
+    margin-top: 4px;
+}
+
+.session-meta {
+    font-size: 12px;
+    color: #999;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.current-badge {
+    background: var(--sage);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* ========== 分页 ========== */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    border-top: 1px solid #EDE9E2;
+    background: #fff;
+    gap: 4px;
+}
+
+.page-btn {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #EDE9E2;
+    background: #fff;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sage);
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #E8F4F2;
+    border-color: var(--sage);
+}
+
+.page-btn:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 4px;
+}
+
+.page-number-btn {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #EDE9E2;
+    background: #fff;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+    color: #3D3D3D;
+}
+
+.page-number-btn:hover {
+    background: #E8F4F2;
+    border-color: var(--sage);
+}
+
+.page-number-btn.active {
+    background: var(--sage);
+    color: #fff;
+    border-color: var(--sage);
+}
+
+/* ========== 主聊天区 ========== */
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.chat-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #EDE9E2;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chat-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #3D3D3D;
+}
+
+#session-info {
+    margin: 0;
+    font-size: 13px;
+    color: #999;
+}
+
+.continue-chat-btn {
+    padding: 7px 18px;
+    background: #D4806E;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin-left: auto;
+}
+
+.continue-chat-btn:hover {
+    background: #C06A58;
+    box-shadow: 0 2px 8px rgba(212,128,110,0.3);
+}
+
+/* ========== 消息区 ========== */
+.chat-history {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #FBF9F6;
+}
+
+.placeholder-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: #999;
+    font-size: 15px;
+}
+
+/* ========== 消息气泡 ========== */
+.message {
+    margin-bottom: 16px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    position: relative;
+    max-width: 75%;
+    line-height: 1.65;
+}
+
+.message.user {
+    background: #E8F4F2;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+}
+
+.message.assistant {
+    background: #fff;
+    border: 1px solid #EDE9E2;
+    margin-right: auto;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 6px;
+    gap: 12px;
+}
+
+.message-header .role {
+    font-weight: 700;
+    color: var(--sage);
+}
+
+.message.user .message-header .role {
+    color: var(--sage-dark);
+}
+
+.message-content {
+    font-size: 15px;
+    color: #3D3D3D;
+    word-break: break-word;
+}
+
+.voice-play-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+    background: #F2F9F8;
+    border: 1px solid #D4E8E5;
+    border-radius: 20px;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+/* 播放中：高亮 + 轻微呼吸动画，让"正在播/可暂停"一眼可见 */
+.voice-play-btn.playing {
+    background: var(--sage);
+    border-color: var(--sage-hover);
+    color: #fff;
+    box-shadow: 0 0 0 3px rgba(90,158,150,0.18);
+    animation: voicePulse 1.6s ease-in-out infinite;
+}
+
+.voice-play-btn.playing:hover {
+    background: var(--sage-hover);
+}
+
+@keyframes voicePulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.09); }
+}
+
+.voice-play-btn:hover {
+    background: #E8F4F2;
+    border-color: var(--sage);
+}
+
+/* ========== 输入区 ========== */
+.chat-input {
+    display: flex;
+    align-items: flex-end;
+    padding: 14px 20px;
+    border-top: 1px solid #EDE9E2;
+    background: #fff;
+    gap: 10px;
+}
+
+.chat-input textarea {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1.5px solid #EDE9E2;
+    border-radius: 12px;
+    resize: none;
+    height: 80px;
+    font-size: 15px;
+    font-family: inherit;
+    color: #3D3D3D;
+    background: #FAFAF8;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.chat-input textarea:focus {
+    outline: none;
+    border-color: var(--sage);
+    box-shadow: 0 0 0 3px rgba(90,158,150,0.1);
+    background: #fff;
+}
+
+.chat-input textarea::placeholder {
+    color: #bbb;
+}
+
+.chat-input button {
+    padding: 12px 22px;
+    background: var(--sage);
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.chat-input button:hover {
+    background: var(--sage-hover);
+    box-shadow: 0 2px 8px rgba(90,158,150,0.3);
+}
+
+.voice-btn {
+    padding: 12px !important;
+    width: 48px;
+    height: 48px;
+    font-size: 18px !important;
+    border-radius: 50% !important;
+}
+
+.voice-btn.recording {
+    background: #E05555 !important;
+    animation: pulse-rec 1.5s infinite;
+}
+
+@keyframes pulse-rec {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(224,85,85,0.4); }
+    50%      { box-shadow: 0 0 0 10px rgba(224,85,85,0); }
+}

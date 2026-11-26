@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}心理对话 - 愈见花园{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <h2>心理对话伙伴</h2>
+        <p>随时分享你的想法和感受，我会认真倾听</p>
+    </div>
+    
+    <div id="chat-history" class="chat-history">
+        <!-- 消息将通过JavaScript动态加载 -->
+    </div>
+    
+    <div class="chat-input">
+        <textarea id="message-input" placeholder="请告诉我你的感受..."></textarea>
+        <button id="voice-btn" class="voice-btn">🎤</button>
+        <button id="send-btn">发送</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatHistory = document.getElementById('chat-history');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const voiceBtn = document.getElementById('voice-btn');
+    
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+
+    // 加载历史消息
+    fetch('/chat/history')
+        .then(response => response.json())
+        .then(messages => {
+            messages.forEach(msg => {
+                addMessageToUI(msg.role, msg.content);
+            });
+        });
+    
+    // 发送消息
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // 语音录制功能
+    voiceBtn.addEventListener('click', toggleRecording);
+
+    async function toggleRecording() {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            await startRecording();
+        }
+    }
+
+    async function startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    sampleRate: 16000,
+                    channelCount: 1,
+                    echoCancellation: false,
+                    noiseSuppression: false
+                }
+            });
+
+            // Use a supported MIME type
+            const options = { 
+                mimeType: 'audio/webm;codecs=opus',
+                audioBitsPerSecond: 16000
+            };
+            
+            mediaRecorder = new MediaRecorder(stream, options);
+            
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            };
+            
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+                
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.webm');
+                
+                try {
+                    const response = await fetch('/chat/voice-input', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    if (response.ok && result.text) {
+                        messageInput.value = result.text;
+                        showToast('识别完成，可以直接发送', 'ok');
+                    } else {
+                        // 原来只 console.error，用户完全看不出失败原因
+                        showToast('语音识别失败：' + (result.error || ('HTTP ' + response.status)), 'err', 9000);
+                    }
+                } catch (error) {
+                    showToast('语音识别请求失败：' + error.message, 'err', 9000);
+                }
+            };
+            
+            mediaRecorder.start();
+            isRecording = true;
+            voiceBtn.classList.add('recording');
+            voiceBtn.textContent = '⏹️';
+        } catch (error) {
+            let tip = '';
+            if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                tip = '麦克风权限被拒绝。请点击地址栏左侧的 🔒/⚙️ 图标，把「麦克风」改为「允许」，再刷新页面。';
+            } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                tip = '没有检测到麦克风设备。';
+            } else if (error.name === 'NotReadableError') {
+                tip = '麦克风被其他程序占用了（如会议软件），请关闭后重试。';
+            } else if (!window.isSecureContext) {
+                tip = '语音功能需要安全环境，请用 http://127.0.0.1:5000 或 http://localhost:5000 访问。';
+            } else {
+                tip = '录音启动失败：' + error.name + ' ' + error.message;
+            }
+            showToast(tip, 'err', 10000);
+        }
+    }
+    
+    function stopRecording() {
+        if (mediaRecorder && isRecording) {
+            mediaRecorder.stop();
+            isRecording = false;
+            voiceBtn.classList.remove('recording');
+            voiceBtn.textContent = '🎤';
+            
+            // 停止所有音频轨道
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
+    }
+
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        // 添加用户消息到UI
+        addMessageToUI('user', message);
+        messageInput.value = '';
+        
+        // 发送到服务器
+        fetch('/chat/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.reply) {
+                addMessageToUI('assistant', data.reply);
+            }
+        });
+    }    
+
+    function addMessageToUI(role, content) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role}`;
+        
+        const roleLabel = role === 'user' ? '你' : '心理助手';
+        messageDiv.innerHTML = `
+            <div class="message-header">
+                <span class="role">${roleLabel}</span>
+                <span class="time">${new Date().toLocaleTimeString()}</span>
+            </div>
+            <div class="message-content">${content.replace(/\n/g, '<br>')}</div>
+        `;
+        
+        // 为AI回复添加语音播放按钮
+        if (role === 'assistant') {
+            const voiceBtn = document.createElement('button');
+            voiceBtn.className = 'voice-play-btn';
+            voiceBtn.innerHTML = '🔊';
+            voiceBtn.title = '播放语音';
+            voiceBtn.onclick = () => playVoice(content, voiceBtn);
+            messageDiv.querySelector('.message-content').appendChild(voiceBtn);
+        }
+        
+        chatHistory.appendChild(messageDiv);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    // ============ 语音播放：点一下播放，再点一下暂停 ============
+    // 全局只保留一个音频实例，避免多条消息同时播放、声音叠加。
+    let currentAudio = null;
+    let currentVoiceBtn = null;
+    let voiceCache = {};        // text -> objectURL，二次播放不再请求
+
+    function _resetVoiceBtn(btn) {
+        if (!btn) return;
+        btn.innerHTML = '🔊';
+        btn.title = '播放语音';
+        btn.classList.remove('playing');
+    }
+
+    function stopCurrentVoice() {
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.onended = null;
+            currentAudio.onerror = null;
+            currentAudio = null;
+        }
+        _resetVoiceBtn(currentVoiceBtn);
+        currentVoiceBtn = null;
+    }
+
+    async function playVoice(text, btn) {
+        // 同一个按钮 -> 播放/暂停 切换
+        if (currentAudio && currentVoiceBtn === btn) {
+            if (currentAudio.paused) {
+                try {
+                    await currentAudio.play();
+                    btn.innerHTML = '⏸️';
+                    btn.title = '暂停播放';
+                    btn.classList.add('playing');
+                    showToast('继续播放', 'ok', 1200);
+                } catch (e) {
+                    showToast('恢复播放失败：' + (e.message || e), 'err', 8000);
+                }
+            } else {
+                currentAudio.pause();
+                btn.innerHTML = '🔊';
+                btn.title = '继续播放';
+                btn.classList.remove('playing');
+                showToast('已暂停', 'info', 1200);
+            }
+            return;
+        }
+
+        // 换一条消息 -> 先停上一条，这是"重复点很吵"的根治办法
+        stopCurrentVoice();
+        currentVoiceBtn = btn;
+        btn.innerHTML = '⏳';
+        btn.title = '合成中…';
+        showToast('正在合成语音…', 'info', 0);
+
+        try {
+            let url = voiceCache[text];
+            if (!url) {
+                const response = await fetch('/chat/voice-output', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                if (!response.ok) {
+                    let msg = 'HTTP ' + response.status;
+                    try {
+                        const j = await response.json();
+                        if (j && j.error) msg = j.error;
+                    } catch (e) { /* 非 JSON 就沿用状态码 */ }
+                    throw new Error(msg);
+                }
+                const blob = await response.blob();
+                url = URL.createObjectURL(new Blob([blob], { type: 'audio/mpeg' }));
+                voiceCache[text] = url;
+            }
+
+            const audio = new Audio(url);
+            currentAudio = audio;
+            audio.onended = () => {
+                _resetVoiceBtn(btn);
+                if (currentAudio === audio) { currentAudio = null; currentVoiceBtn = null; }
+            };
+            audio.onerror = () => {
+                _resetVoiceBtn(btn);
+                showToast('音频播放出错，请重试。', 'err', 8000);
+            };
+
+            await audio.play();
+            btn.innerHTML = '⏸️';
+            btn.title = '暂停播放';
+            btn.classList.add('playing');
+            showToast('开始播放（再点一下可暂停）', 'ok', 1800);
+        } catch (error) {
+            _resetVoiceBtn(btn);
+            if (currentVoiceBtn === btn) { currentVoiceBtn = null; currentAudio = null; }
+            const m = String(error && error.message || error);
+            if (m.includes('NotAllowedError') || m.includes("didn't interact")) {
+                showToast('浏览器阻止了自动播放，请再点一次 🔊 按钮。', 'err', 8000);
+            } else {
+                showToast('语音播放失败：' + m, 'err', 9000);
+            }
+        }
+    }
+
+    // 轻量提示条：把原来只写进控制台的错误显示到页面上
+    function showToast(msg, kind, duration) {
+        if (duration === undefined) duration = 5000;
+        let box = document.getElementById('chat-toast');
+        if (!box) {
+            box = document.createElement('div');
+            box.id = 'chat-toast';
+            document.body.appendChild(box);
+        }
+        const colors = {
+            err:  { bg: '#FBE9E5', fg: '#8A4A3C', bd: '#F0CFC7' },
+            ok:   { bg: '#E8F4F2', fg: '#3F7A73', bd: '#C9E3DF' },
+            info: { bg: '#F4F1EA', fg: '#6B7B8D', bd: '#E0DCD5' }
+        };
+        const c = colors[kind] || colors.info;
+        box.textContent = msg;
+        box.style.background = c.bg;
+        box.style.color = c.fg;
+        box.style.borderColor = c.bd;
+        box.style.display = 'block';
+        if (box._timer) { clearTimeout(box._timer); box._timer = null; }
+        if (duration > 0) {
+            box._timer = setTimeout(() => { box.style.display = 'none'; }, duration);
+        }
+    }
+});
+</script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat_index.css') }}">
+{% endblock %}

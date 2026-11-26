@@ -1,0 +1,48 @@
+/* 色板与公共变量在 print_palette.css；风格也通过轮廓、字形和插画区分。 */
+[data-theme="cute"] {
+    --radius-sm: 12px; --radius: 18px; --radius-lg: 26px;
+    --t-font-title: Georgia, "Yuanti SC", YouYuan, serif;
+}
+[data-theme="fresh"] {
+    --radius-sm: 8px; --radius: 12px; --radius-lg: 16px;
+    --t-font-title: Georgia, "Songti SC", SimSun, serif;
+}
+[data-theme="ugly"] {
+    --radius-sm: 10px; --radius: 16px; --radius-lg: 22px;
+    --t-font-title: Georgia, "Yuanti SC", YouYuan, serif;
+}
+body { background-color: var(--t-body-bg, var(--cream)); }
+
+.theme-veil {
+    position: fixed; inset: 0; z-index: 9999;
+    display: grid; place-items: center;
+    background: var(--cream);
+    opacity: 0; pointer-events: none;
+    transition: opacity .38s ease;
+}
+.theme-veil.on { opacity: 1; pointer-events: all; }
+
+.theme-veil-inner { text-align: center; transform: translateY(6px); }
+
+.theme-veil-emoji {
+    font-size: 54px; display: inline-block;
+    animation: veil-bob 1.1s ease-in-out infinite;
+}
+@keyframes veil-bob {
+    0%, 100% { transform: translateY(0) rotate(-6deg); }
+    50%      { transform: translateY(-12px) rotate(6deg); }
+}
+
+.theme-veil-text {
+    margin-top: 14px; font-size: 17px; font-weight: 700;
+    color: var(--text); letter-spacing: .06em;
+}
+.theme-veil-sub {
+    margin-top: 6px; font-size: 13px; color: var(--text-muted);
+    letter-spacing: .12em;
+}
+
+/* 丑萌风的加载幕扭一扭 */
+[data-theme="ugly"] .theme-veil-inner { transform: rotate(-2deg); }
+
+@media (prefers-reduced-motion: reduce) { .theme-veil-emoji { animation: none; } }

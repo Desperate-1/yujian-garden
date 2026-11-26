@@ -1,0 +1,105 @@
+/* 指引沿用当前场景的纸色和墨色。书本图标由两页轮廓构成。 */
+body {
+    --sg-paper: var(--mg-paper, var(--cream));
+    --sg-ink: var(--mg-ink, var(--text));
+}
+body:has(.candy-room) {
+    --sg-paper: var(--ch-paper, var(--mg-paper));
+    --sg-ink: var(--ch-ink, var(--mg-ink));
+}
+.sg-card[hidden], .sg-launch[hidden], .sg-card button[hidden] { display: none !important; }
+.sg-card, button.sg-launch {
+    color: var(--sg-ink);
+    background: var(--sg-paper);
+    box-sizing: border-box;
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+button.sg-launch, .sg-card button {
+    appearance: none;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+}
+button.sg-launch {
+    display: inline-flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    min-height: 36px;
+    border: 1px solid var(--sg-ink);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font: 600 12px/1.2 "Microsoft YaHei", "PingFang SC", sans-serif;
+    letter-spacing: .03em;
+    white-space: nowrap;
+    color: var(--sg-ink);
+    background: var(--sg-paper);
+}
+.sg-launch.sg-floating {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    right: max(16px, env(safe-area-inset-right));
+    z-index: 3600;
+}
+.sg-launch.sg-in-heading { margin-inline-start: 12px; vertical-align: middle; }
+.lobby-header:has(.sg-launch) .lobby-location { margin-inline-start: auto; }
+.sg-book { display: inline-flex; align-items: center; height: 15px; width: 18px; flex: none; }
+.sg-book::before, .sg-book::after {
+    content: "";
+    box-sizing: border-box;
+    width: 9px;
+    height: 12px;
+    border: 1.5px solid currentColor;
+    border-radius: 1px 4px 1px 1px;
+    transform: skewY(10deg);
+}
+.sg-book::after { border-radius: 4px 1px 1px 1px; transform: skewY(-10deg); margin-left: -1px; }
+.sg-card {
+    position: fixed;
+    z-index: 4900;
+    width: min(300px, calc(100vw - 24px));
+    max-height: calc(100dvh - 24px);
+    overflow: auto;
+    padding: 14px 18px 12px;
+    border: 1px solid var(--sg-ink);
+    border-radius: 10px;
+    box-shadow: 3px 3px 0 var(--sg-ink);
+    text-align: left;
+}
+.sg-top, .sg-bottom, .sg-byline { display: flex; align-items: center; gap: 8px; }
+.sg-top, .sg-bottom { justify-content: space-between; }
+.sg-byline { font-size: 12px; letter-spacing: .06em; font-weight: 600; }
+.sg-card button { min-height: 36px; padding: 3px 8px; border-radius: 5px; font-size: 13px; }
+.sg-card #sgSkip { text-decoration: underline; text-underline-offset: 3px; }
+.sg-card #sgTitle {
+    color: inherit;
+    margin: 5px 0;
+    font: 600 21px/1.4 Georgia, "Songti SC", SimSun, serif;
+    letter-spacing: .03em;
+    text-shadow: none;
+    text-align: left;
+}
+.sg-card #sgDescription { color: inherit; font-size: 14px; line-height: 1.6; margin: 0; text-align: left; }
+.sg-bottom { margin-top: 12px; }
+.sg-count { margin-right: auto; font: 600 12px/1.2 Georgia, serif; font-variant-numeric: tabular-nums; }
+.sg-card #sgNext {
+    border: 1px solid var(--sg-ink);
+    background: var(--sg-ink);
+    color: var(--sg-paper);
+    padding-inline: 14px;
+    font-weight: 600;
+}
+button.sg-launch:hover, .sg-card button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.sg-card button:focus-visible, button.sg-launch:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.sg-target { outline: 2px dashed var(--sg-ink) !important; outline-offset: 3px; }
+@media (max-width: 600px) {
+    .lobby-header .sg-launch { min-height: 36px; }
+    .g3d-viewport:has(.sg-launch) .g3d-greeting { top: 62px; width: max-content; max-width: calc(100% - 24px); }
+    .sg-card { padding: 9px 14px; }
+    .sg-card button, button.sg-launch { min-height: 42px; }
+    .sg-card #sgTitle { margin: 1px 0 3px; font-size: 19px; }
+    .sg-bottom { margin-top: 5px; }
+}

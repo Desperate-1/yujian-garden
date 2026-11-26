@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}{{ g_scene.house }} · 愈见花园{% endblock %}
+
+{# 屋里是一个全屏场景，用页面自己的小工具条（回花园 / 退出），不要全局导航 #}
+{% block nav %}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/candy_house.css') }}">
+
+<main class="candy-room" id="candyRoom" data-session="{{ chat_session_id }}" data-gesture="{{ g_scene.gesture }}">
+    <svg aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+        <defs>
+            <filter id="cherry-portrait-inks" color-interpolation-filters="sRGB">
+                <feColorMatrix type="saturate" values="0"/>
+                <feComponentTransfer>
+                    <feFuncR type="discrete" tableValues="0.1961 0.6510 0.4863 0.8706 0.9686"/>
+                    <feFuncG type="discrete" tableValues="0.1647 0.2784 0.5804 0.6627 0.9176"/>
+                    <feFuncB type="discrete" tableValues="0.2196 0.3255 0.5176 0.3490 0.8118"/>
+                </feComponentTransfer>
+            </filter>
+        </defs>
+    </svg>
+    <header class="candy-hud">
+        {% include '_garden_return.html' %}
+        <a class="candy-home" href="{{ url_for('creation.garden', _anchor='candy') }}" aria-label="愈见花园 · 返回花园">
+            <span class="candy-mark" aria-hidden="true"></span>愈见花园
+        </a>
+        <div class="candy-actions">
+            <button class="candy-tool" id="companionJournal" type="button" hidden>带 TA 写日记</button>
+            <button class="candy-tool" id="companionDance" type="button" hidden>带 TA 去跳舞</button>
+            <button class="candy-tool candy-therapy-entry" id="therapyEntry" type="button">剧本疗愈</button>
+            <a class="candy-tool" href="{{ url_for('auth.logout') }}">退出账号</a>
+        </div>
+    </header>
+
+    <div class="candy-spread">
+        <div class="candy-stage" aria-label="{{ g_scene.host }}的房间">
+            <div class="candy-room-bg" aria-hidden="true" style="background-image:url('{{ room_url }}')"></div>
+            <div class="candy-cast">
+                {% if witch_poses %}
+                <button type="button" class="candy-greet" id="candyGreet" aria-label="和{{ g_scene.host }}打个招呼">
+                    <img class="candy-witch-img" id="candyWitchImg" src="{{ witch_poses[0] }}"
+                         alt="" draggable="false">
+                    <span class="candy-greet-flower" aria-hidden="true">{{ g_themes[g_theme].emoji }}</span>
+                </button>
+                <span class="candy-greet-reply" id="candyGreetReply" role="status"></span>
+                {% endif %}
+            </div>
+            <div class="candy-visitor" id="candyVisitor" hidden>
+                <img id="candyVisitorImg" alt="你的治愈女巫" draggable="false">
+                <span id="candyVisitorName"></span>
+            </div>
+        </div>
+
+        <section class="candy-conversation" aria-labelledby="candyTitle">
+            <div class="candy-intro">
+                <h1 id="candyTitle">{{ g_scene.house }}</h1>
+                <div class="candy-rule" aria-hidden="true"><i></i></div>
+            </div>
+            <div class="candy-progress" id="candyProgress" hidden aria-label="剧本进度">
+                <i data-s="0"><b></b>收集信息</i>
+                <i data-s="1"><b></b>分析意图</i>
+                <i data-s="2"><b></b>生成剧本</i>
+                <i data-s="3"><b></b>角色扮演</i>
+                <i data-s="4"><b></b>总结</i>
+            </div>
+            <div class="candy-bubble" id="candyBubble" aria-live="polite">
+                <span class="candy-speaker">{{ g_scene.role }} · {{ g_scene.host }}</span>
+                <p class="candy-bubble-text" id="candyBubbleText">{{ g_scene.welcome }}</p>
+                <span class="candy-typing" id="candyTyping" hidden aria-label="正在回复">
+                    <i></i><i></i><i></i>
+                </span>
+                <a class="candy-goto" id="candyGoto" hidden href="#"></a>
+            </div>
+            <div class="candy-dock">
+                <div class="candy-echo" id="candyEcho" hidden></div>
+                <form class="candy-form" id="candyForm" autocomplete="off">
+                    <label for="candyInput">你的留言</label>
+                    <textarea id="candyInput" rows="2" maxlength="2000" placeholder="把想说的写在这里……"></textarea>
+                    <div class="candy-form-actions">
+                        <span class="candy-shortcut">Enter 发送 · Shift + Enter 换行</span>
+                        <button type="submit" class="candy-send" id="candySend">发送 <span aria-hidden="true">↗</span></button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    {# 跨场馆邀请卡：剧本疗愈中 agent 发出邀请时滑出，
+       10 秒倒计时自动「飞转」过去，点「再坐会儿」即取消 #}
+    <div class="candy-invite" id="candyInvite" hidden>
+        <div class="candy-invite-head">
+            <span class="candy-invite-spark">✦</span>
+            <span class="candy-invite-title">{{ g_scene.host }}想带你去个地方</span>
+        </div>
+        <p class="candy-invite-msg" id="candyInviteMsg"></p>
+        <div class="candy-invite-foot">
+            <a class="candy-invite-go" id="candyInviteGo" href="#">前往 <b id="candyInviteScene"></b> →</a>
+            <button class="candy-invite-stay" id="candyInviteStay" type="button">再坐会儿</button>
+            <span class="candy-invite-count" id="candyInviteCount">10</span>
+        </div>
+    </div>
+
+    {# ============ 剧本疗愈的浮层家族 ============
+       流程：点大按钮 → 剧本架（有历史时）→ 开局表格 → 生成中/3选1 → 开演
+       全部浮层都在 .candy-room 内，吃 `.candy-room [hidden]` 的真隐藏兜底 #}
+
+    {# 1. 剧本架：历史剧本列表（剧本名 / 创建日期 / 最后对话日期）#}
+    <div class="candy-overlay" id="therapyShelf" role="dialog" aria-modal="true" aria-labelledby="therapyShelfTitle" hidden>
+        <div class="candy-card">
+            <h3 class="candy-card-title" id="therapyShelfTitle">剧本架</h3>
+            <p class="candy-card-sub">每一本都是一段心灵旅程。选一本继续走，或者开一本新的</p>
+            <div class="shelf-list" id="shelfList"></div>
+            <div class="candy-card-actions">
+                <button class="candy-btn is-primary" id="shelfNew" type="button">写一本新剧本</button>
+                <button class="candy-btn" id="shelfEdit" type="button">改一改开局信息</button>
+                <button class="candy-btn" id="shelfClose" type="button">先去别处看看</button>
+            </div>
+        </div>
+    </div>
+
+    {# 2. 开局表格：昵称 / 心情 / 处境 / 期望女巫形象 / 剧情偏好 #}
+    <div class="candy-overlay" id="therapySetup" role="dialog" aria-modal="true" aria-labelledby="therapySetupTitle" hidden>
+        <div class="candy-card">
+            <h3 class="candy-card-title" id="therapySetupTitle">开演前的小表格</h3>
+            <p class="candy-card-sub">写下你希望加入故事的内容。每一项都可以留空。</p>
+            <form id="setupForm" class="setup-form">
+                <label class="setup-field"><span>怎么称呼你</span>
+                    <input name="nickname" maxlength="20" placeholder="你的昵称"></label>
+                <label class="setup-field"><span>现在的心情</span>
+                    <input name="mood" maxlength="40" placeholder="比如：有点闷 / 还不错 / 绷得紧"></label>
+                <label class="setup-field"><span>最近的处境</span>
+                    <input name="situation" maxlength="80" placeholder="比如：期中周 / 刚和朋友吵了一架"></label>
+                <label class="setup-field"><span>希望治愈你的女巫长什么样</span>
+                    <input name="witch_look" maxlength="120"
+                           placeholder="比如：紫色卷发、圆圆脸、笑起来有酒窝、抱着一只猫"></label>
+                <label class="setup-field"><span>剧情偏好（可选）</span>
+                    <input name="plot_pref" maxlength="80" placeholder="比如：想发生在海边 / 别出现虫子"></label>
+                <div class="candy-card-actions">
+                    <button class="candy-btn is-primary" type="submit">生成我的治愈女巫 →</button>
+                    <button class="candy-btn" type="button" id="setupBack">返回</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# 3. 选女巫：先 3 张绘制中的占位卡，出图后变成候选立绘 #}
+    <div class="candy-overlay" id="witchPick" role="dialog" aria-modal="true" aria-labelledby="witchPickTitle" hidden>
+        <div class="candy-card is-wide">
+            <h3 class="candy-card-title" id="witchPickTitle">选择你的治愈女巫</h3>
+            <p class="candy-card-sub" id="witchPickSub">魔法绘制中，大概需要一分钟……</p>
+            <div class="witch-pick-grid" id="witchPickGrid"></div>
+            <div class="candy-card-actions">
+                <button class="candy-btn" id="witchPickBack" type="button" hidden>← 返回改描述</button>
+            </div>
+        </div>
+    </div>
+
+    {# 4. 剧本卡：剧本生成完成时弹一次，展示主题/角色/目标 #}
+    <div class="candy-overlay" id="scenarioCard" role="dialog" aria-modal="true" aria-labelledby="scenarioCardTitle" hidden>
+        <div class="candy-card">
+            <h3 class="candy-card-title" id="scenarioCardTitle">你的剧本写好了</h3>
+            <div class="scenario-body" id="scenarioBody"></div>
+            <div class="candy-card-actions">
+                <button class="candy-btn is-primary" id="scenarioGo" type="button">开始演绎 →</button>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+{% if witch_poses %}
+<script id="storyPoses" type="application/json">{{ story_poses | tojson }}</script>
+<script id="candyWitchPoses" type="application/json">{{ witch_poses | tojson }}</script>
+{% endif %}
+<script src="{{ url_for('static', filename='js/candy_house.js') }}"></script>
+{% endblock %}

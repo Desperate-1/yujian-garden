@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+
+{% block title %}艺术回廊 · 愈见花园{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/creation_gallery_cards.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/gallery_wall.css') }}">
+<main class="garden-exhibition healing-exhibition">
+    <header class="exhibition-heading">
+        <div>
+            <h1>艺术回廊</h1>
+            <p>在这里回看你的图片、立体作品和音乐。</p>
+        </div>
+        <div class="exhibition-actions">
+            <a class="garden-create-link" href="{{ url_for('creation.create_page') }}">＋ 开始一次创作</a>
+        </div>
+        <img class="gallery-door-print" src="{{ url_for('static', filename='garden/illustrated/' ~ g_theme ~ '/wall.webp') }}" alt="">
+    </header>
+
+    <!-- 图片作品区域 -->
+    <div class="section">
+        <h3>图片作品</h3>
+        {% set image_creations = [] %}
+        {% for creation in creations %}
+            {% if creation.get('content_type') == 'image' %}
+                {% set _ = image_creations.append(creation) %}
+            {% endif %}
+        {% endfor %}
+        
+        {% if image_creations %}
+        <div class="creations-grid">
+            {% for creation in image_creations %}
+            <div class="creation-item" id="creation-{{ creation.id }}">
+                <div class="thumbnail-container">
+                    <img src="{{ url_for('creation.send_genres_file', filename=creation.filename) }}" 
+                        alt="艺术创作 {{ creation.created_at.strftime('%Y-%m-%d %H:%M') }}"
+                        class="creation-image"
+                        onclick="showImageModal(this.src)">
+                    <button type="button" class="delete-overlay" onclick="deleteArtwork('{{ creation.id }}', this)" aria-label="删除作品">×</button>
+                </div>
+                <div class="creation-info">
+                    <span class="creation-date">{{ creation.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    {% if creation.intent %}
+                    <span class="creation-intent"><span class="ci-label">想安放</span>{{ creation.intent }}</span>
+                    {% endif %}
+                </div>
+                <!-- 点赞收藏按钮行 -->
+                <div class="work-interactions">
+                    <button class="interaction-btn like-btn {% if creation.user_status.liked %}liked{% endif %}" 
+                            data-work-id="{{ creation.id }}" title="点赞">
+                        <span class="icon">
+                            {% if creation.user_status.liked %}
+                            已赞
+                            {% else %}
+                            赞
+                            {% endif %}
+                        </span>
+                        <span class="count">{{ creation.work_stats.like_count }}</span>
+                    </button>
+                    <button class="interaction-btn collect-btn {% if creation.user_status.collected %}collected{% endif %}" 
+                            data-work-id="{{ creation.id }}" title="收藏">
+                        <span class="icon">
+                            {% if creation.user_status.collected %}
+                            已收藏
+                            {% else %}
+                            收藏
+                            {% endif %}
+                        </span>
+                        <span class="count">{{ creation.work_stats.collection_count }}</span>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+            <a class="empty-frame" href="{{ url_for('creation.create_page') }}">
+                <span class="ef-plus">＋</span>
+                <span class="ef-text">再创作一件</span>
+                <span class="ef-sub">这个画框为你留着的</span>
+            </a>
+        </div>
+        {% else %}
+        <a class="empty-frame" href="{{ url_for('creation.create_page') }}">
+            <span class="ef-plus">＋</span>
+            <span class="ef-text">还没有图片作品</span>
+            <span class="ef-sub">点这里，创作第一件挂在墙上</span>
+        </a>
+        {% endif %}
+    </div>
+
+
+    <!-- 3D作品区域 -->
+    <div class="section">
+        <h3>3D作品</h3>
+        {% set threed_creations = [] %}
+        {% for creation in creations %}
+            {% if creation.get('content_type') == '3d' %}
+                {% set _ = threed_creations.append(creation) %}
+            {% endif %}
+        {% endfor %}
+        
+        {% if threed_creations %}
+        <div class="creations-grid">
+            {% for creation in threed_creations %}
+            <div class="creation-item threed-item" id="creation-{{ creation.id }}">
+                <!-- 使用预览图作为缩略图 -->
+                {% set preview_filename = creation.filename %}
+                {% set mp4_filename = preview_filename.replace('_preview.png', '.mp4') %}
+                {% set mp4_url = url_for('creation.send_genres_file', filename=mp4_filename) %}
+                
+                <div class="thumbnail-container">
+                    <div class="threed-thumbnail" onclick="play3DVideo('{{ mp4_url }}')">
+                        <img src="{{ url_for('creation.send_genres_file', filename=preview_filename) }}" 
+                            alt="3D作品预览 {{ creation.created_at.strftime('%Y-%m-%d %H:%M') }}"
+                            class="threed-preview">
+                        <div class="threed-overlay">
+                            <span class="play-icon">▶</span>
+                            <span class="threed-badge">3D</span>
+                        </div>
+                    </div>
+                    <button type="button" class="delete-overlay" onclick="deleteArtwork('{{ creation.id }}', this)" aria-label="删除作品">×</button>
+                </div>
+                <div class="creation-info">
+                    <span class="creation-date">{{ creation.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    {% if creation.intent %}
+                    <span class="creation-intent"><span class="ci-label">想安放</span>{{ creation.intent }}</span>
+                    {% endif %}
+                </div>
+                <!-- 新增：点赞收藏按钮行 -->
+                <div class="work-interactions">
+                    <button class="interaction-btn like-btn {% if creation.user_status.liked %}liked{% endif %}" 
+                            data-work-id="{{ creation.id }}" title="点赞">
+                        <span class="icon">
+                            {% if creation.user_status.liked %}
+                            已赞
+                            {% else %}
+                            赞
+                            {% endif %}
+                        </span>
+                        <span class="count">{{ creation.work_stats.like_count }}</span>
+                    </button>
+                    <button class="interaction-btn collect-btn {% if creation.user_status.collected %}collected{% endif %}" 
+                            data-work-id="{{ creation.id }}" title="收藏">
+                        <span class="icon">
+                            {% if creation.user_status.collected %}
+                            已收藏
+                            {% else %}
+                            收藏
+                            {% endif %}
+                        </span>
+                        <span class="count">{{ creation.work_stats.collection_count }}</span>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+            <a class="empty-frame" href="{{ url_for('creation.create_page') }}">
+                <span class="ef-plus">＋</span>
+                <span class="ef-text">再创作一件</span>
+                <span class="ef-sub">这个画框为你留着的</span>
+            </a>
+        </div>
+        {% else %}
+        <a class="empty-frame" href="{{ url_for('creation.create_page') }}">
+            <span class="ef-plus">＋</span>
+            <span class="ef-text">还没有3D作品</span>
+            <span class="ef-sub">点这里，创作第一件放进回廊</span>
+        </a>
+        {% endif %}
+    </div>
+
+    
+
+    <div class="section">
+        <h3>音乐作品</h3>
+        {% set music_creations = [] %}
+        {% for creation in creations %}
+            {% if creation.get('content_type') == 'music' %}
+                {% set _ = music_creations.append(creation) %}
+            {% endif %}
+        {% endfor %}
+        
+        {% if music_creations %}
+        <div class="creations-grid">
+            {% for creation in music_creations %}
+            <div class="creation-item music-item" id="creation-{{ creation.id }}">
+                <div class="thumbnail-container">
+                    <div class="music-player">
+                        <span class="music-icon" aria-hidden="true">♫</span>
+                        <div class="playing-indicator" id="indicator-{{ loop.index }}"></div>
+                    </div>
+                    <button type="button" class="delete-overlay" onclick="deleteArtwork('{{ creation.id }}', this)" aria-label="删除作品">×</button>
+                </div>
+                <div class="creation-info">
+                    <span class="creation-date">{{ creation.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    {% if creation.intent %}
+                    <span class="creation-intent"><span class="ci-label">想安放</span>{{ creation.intent }}</span>
+                    {% endif %}
+                    <button type="button" class="music-controls" onclick="toggleMusic(this, '{{ loop.index }}')" aria-label="播放或暂停音乐">
+                        <span class="play-icon" id="play-{{ loop.index }}">▶</span>
+                        <span class="pause-icon" id="pause-{{ loop.index }}" style="display: none;">Ⅱ</span>
+                    </button>
+                </div>
+                <!-- 新增：点赞收藏按钮行 -->
+                <div class="work-interactions">
+                    <button class="interaction-btn like-btn {% if creation.user_status.liked %}liked{% endif %}" 
+                            data-work-id="{{ creation.id }}" title="点赞">
+                        <span class="icon">
+                            {% if creation.user_status.liked %}
+                            已赞
+                            {% else %}
+                            赞
+                            {% endif %}
+                        </span>
+                        <span class="count">{{ creation.work_stats.like_count }}</span>
+                    </button>
+                    <button class="interaction-btn collect-btn {% if creation.user_status.collected %}collected{% endif %}" 
+                            data-work-id="{{ creation.id }}" title="收藏">
+                        <span class="icon">
+                            {% if creation.user_status.collected %}
+                            已收藏
+                            {% else %}
+                            收藏
+                            {% endif %}
+                        </span>
+                        <span class="count">{{ creation.work_stats.collection_count }}</span>
+                    </button>
+                </div>
+                <audio preload="none" id="audio-{{ loop.index }}">
+                    <source src="{{ url_for('creation.send_genres_file', filename=creation.filename) }}" type="audio/mpeg">
+                </audio>
+            </div>
+            {% endfor %}
+            <a class="empty-frame" href="{{ url_for('creation.create_page') }}">
+                <span class="ef-plus">＋</span>
+                <span class="ef-text">再创作一件</span>
+                <span class="ef-sub">这个画框为你留着的</span>
+            </a>
+        </div>
+        {% else %}
+        <a class="empty-frame" href="{{ url_for('creation.create_page') }}">
+            <span class="ef-plus">＋</span>
+            <span class="ef-text">还没有音乐作品</span>
+            <span class="ef-sub">点这里，为回廊添第一段旋律</span>
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- 图片模态框 -->
+    <div id="imageModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <!-- 3D视频模态框 -->
+    <div id="videoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-video">&times;</span>
+            <video id="3dVideo" controls width="100%">
+                <source src="" type="video/mp4">
+                您的浏览器不支持视频播放。
+            </video>
+        </div>
+    </div>
+
+</main>
+
+    <script>
+    // 显示图片模态框
+    function showImageModal(imageUrl) {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        modal.style.display = 'block';
+        modalImg.src = imageUrl;
+    }
+
+    // 播放3D视频
+    function play3DVideo(videoUrl) {
+        const modal = document.getElementById('videoModal');
+        const video = document.getElementById('3dVideo');
+        const closeBtn = document.querySelector('.close-video');
+        
+        video.src = videoUrl;
+        modal.style.display = 'block';
+        video.play();
+        
+        // 关闭模态框
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+            video.pause();
+            video.currentTime = 0;
+        }
+    }
+
+    async function deleteArtwork(artworkId, element) {
+        if (!confirm('确定要删除这个作品吗？此操作不可撤销。')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/work/delete/${artworkId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // 从DOM中移除作品元素
+                const creationElement = document.getElementById(`creation-${artworkId}`);
+                if (creationElement) {
+                    creationElement.style.opacity = '0';
+                    creationElement.style.transform = 'scale(0.8)';
+                    setTimeout(() => {
+                        const grid = creationElement.closest('.creations-grid');
+                        creationElement.remove();
+                        if (grid && !grid.querySelector('.creation-item')) {
+                            // 重新渲染本类别原有的空画框或上传入口。
+                            window.location.reload();
+                        }
+                    }, 300);
+                }
+                // 移除删除成功的弹窗提示
+            } else {
+                alert(result.message || '删除失败');
+            }
+        } catch (error) {
+            console.error('删除失败:', error);
+            alert('删除失败，请重试');
+        }
+    }
+
+    // 关闭模态框
+    document.querySelector('.close').addEventListener('click', function() {
+        document.getElementById('imageModal').style.display = 'none';
+    });
+
+    // 关闭模态框的事件处理
+    document.addEventListener('DOMContentLoaded', function() {
+        // 点赞功能
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const workId = this.dataset.workId;
+                toggleLike(workId, this);
+            });
+        });
+        
+        // 收藏功能
+        document.querySelectorAll('.collect-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const workId = this.dataset.workId;
+                toggleCollect(workId, this);
+            });
+        });
+        
+        async function toggleLike(workId, button) {
+            try {
+                const response = await fetch(`/work/like/${workId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const icon = button.querySelector('.icon');
+                    const countSpan = button.querySelector('.count');
+                    
+                    if (result.liked) {
+                        button.classList.add('liked');
+                        icon.textContent = '已赞';
+                        countSpan.textContent = parseInt(countSpan.textContent) + 1;
+                    } else {
+                        button.classList.remove('liked');
+                        icon.textContent = '赞';
+                        countSpan.textContent = parseInt(countSpan.textContent) - 1;
+                    }
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                console.error('点赞失败:', error);
+                alert('操作失败，请重试');
+            }
+        }
+        
+        async function toggleCollect(workId, button) {
+            try {
+                const response = await fetch(`/work/collect/${workId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const icon = button.querySelector('.icon');
+                    const countSpan = button.querySelector('.count');
+                    
+                    if (result.collected) {
+                        button.classList.add('collected');
+                        icon.textContent = '已收藏';
+                        countSpan.textContent = parseInt(countSpan.textContent) + 1;
+                    } else {
+                        button.classList.remove('collected');
+                        icon.textContent = '收藏';
+                        countSpan.textContent = parseInt(countSpan.textContent) - 1;
+                    }
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                console.error('收藏失败:', error);
+                alert('操作失败，请重试');
+            }
+        }
+        
+        // 图片模态框关闭
+        document.querySelector('#imageModal .close').addEventListener('click', function() {
+            document.getElementById('imageModal').style.display = 'none';
+        });
+        
+        // 视频模态框关闭
+        document.querySelector('.close-video').addEventListener('click', function() {
+            const modal = document.getElementById('videoModal');
+            const video = document.getElementById('3dVideo');
+            modal.style.display = 'none';
+            video.pause();
+            video.currentTime = 0;
+        });
+        
+        // 点击模态框外部关闭
+        window.addEventListener('click', function(event) {
+            const imageModal = document.getElementById('imageModal');
+            const videoModal = document.getElementById('videoModal');
+            const video = document.getElementById('3dVideo');
+            
+            if (event.target === imageModal) {
+                imageModal.style.display = 'none';
+            }
+            if (event.target === videoModal) {
+                videoModal.style.display = 'none';
+                video.pause();
+                video.currentTime = 0;
+            }
+        });
+    });
+
+    // 播放/暂停音乐
+    function toggleMusic(controlElement, index) {
+        const audio = document.getElementById(`audio-${index}`);
+        const playIcon = document.getElementById(`play-${index}`);
+        const pauseIcon = document.getElementById(`pause-${index}`);
+        const indicator = document.getElementById(`indicator-${index}`);
+        
+        if (audio.paused) {
+            audio.play();
+            playIcon.style.display = 'none';
+            pauseIcon.style.display = 'inline';
+            indicator.style.display = 'block';
+            indicator.classList.add('playing');
+        } else {
+            audio.pause();
+            playIcon.style.display = 'inline';
+            pauseIcon.style.display = 'none';
+            indicator.style.display = 'none';
+            indicator.classList.remove('playing');
+        }
+        
+        // 添加播放结束事件
+        audio.onended = function() {
+            playIcon.style.display = 'inline';
+            pauseIcon.style.display = 'none';
+            indicator.style.display = 'none';
+            indicator.classList.remove('playing');
+            audio.currentTime = 0; // 重置到开头
+        };
+    }
+
+    // 点击模态框外部关闭
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('imageModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+    </script>
+{% endblock %}

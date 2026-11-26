@@ -1,0 +1,178 @@
+/* Five printing inks for the full-bleed scene and its controls. */
+body:has(#homeGarden) {
+    --sky: #a6cfd1; --paper: #fff0cd; --leaf: #78905c; --ink: #233f3b; --petal: #e6ab4d;
+    --letter: var(--ink); --cloud: var(--paper); --sg-ink: var(--ink); --sg-paper: var(--paper);
+    background: var(--sky); color: var(--letter);
+}
+body:has(#homeGarden[data-period="noon"]) {
+    --sky: #87c9d8; --paper: #fff2d8; --leaf: #568668; --ink: #23433e; --petal: #f2bb59;
+}
+body:has(#homeGarden[data-period="night"]) {
+    --sky: #2b3a58; --paper: #f4e8c8; --leaf: #61817d; --ink: #172b39; --petal: #e6b66c;
+    --letter: var(--paper); --cloud: var(--leaf);
+}
+body:has(#homeGarden) .content { max-width: none; margin: 0; padding: 0; }
+#homeGarden {
+    --meadow-leaf: var(--leaf); --meadow-ink: var(--ink);
+    --meadow-paper: var(--paper); --meadow-petal: var(--petal);
+    --hand: "STKaiti","KaiTi","Kaiti SC","DFKai-SB","Songti SC",SimSun,serif;
+    --sun-x: 16%; --sun-y: 20%; --sun-image: url("../garden/lobby/sun-morning.png");
+    position: relative; isolation: isolate; overflow: hidden; width: 100%;
+    min-height: 520px; height: 100vh; height: 100svh; color: var(--letter);
+    background-color: var(--sky); text-align: center;
+}
+#homeGarden[data-period="noon"] {
+    --sun-x: 50%; --sun-y: 11%; --sun-image: url("../garden/lobby/sun-noon.png");
+}
+#homeGarden[data-period="night"] {
+    --sun-x: 80%; --sun-y: 20%; --sun-image: url("../garden/lobby/moon.webp");
+}
+.lobby-landscape, .lobby-stars { position: absolute; inset: 0; pointer-events: none; }
+.lobby-landscape {
+    background: center / 100% 100% no-repeat url("../garden/lobby/wide-morning.png");
+}
+[data-period="noon"] .lobby-landscape { background-image: url("../garden/lobby/wide-noon.png"); }
+[data-period="night"] .lobby-landscape { background-image: url("../garden/lobby/wide-night.png"); }
+.lobby-sun {
+    position: absolute; left: var(--sun-x); top: var(--sun-y); transform: translate(-50%, -50%);
+    width: clamp(80px, min(11.7vw, 18.5vh), 178px); height: auto; aspect-ratio: 1;
+    background: center / contain no-repeat var(--sun-image); pointer-events: none;
+}
+.lobby-stars { display: none; }
+[data-period="night"] .lobby-stars { display: block; }
+.lobby-stars i {
+    position: absolute; width: var(--size); height: calc(var(--size) * 1.4);
+    background: var(--paper); transform: rotate(12deg);
+    clip-path: polygon(48% 0, 62% 38%, 100% 48%, 61% 62%, 40% 100%, 33% 61%, 0 49%, 37% 36%);
+}
+#lobbyMeadow { position: absolute; bottom: 0; left: 0; width: 100%; height: 21%; pointer-events: none; }
+.lobby-header {
+    position: absolute; left: clamp(18px, 4vw, 72px); right: clamp(18px, 4vw, 72px);
+    top: max(clamp(15px, 3.6vh, 40px), env(safe-area-inset-top)); display: flex;
+    align-items: center; gap: clamp(12px, 1.45vw, 22px); text-align: left;
+}
+#homeGarden a { color: inherit; }
+.lobby-brand {
+    font: italic 700 clamp(23px, 2.35vw, 35px)/1 "Palatino Linotype", Georgia, serif;
+    letter-spacing: -.065em; text-decoration: none;
+}
+.lobby-location { border-left: 1px solid currentColor; padding-left: 14px; font: 600 14px/1.2 var(--hand); letter-spacing: .08em; }
+#homeGarden .home-login, #homeGarden .sg-launch { font: 600 14px/1.2 var(--hand); }
+#homeGarden .home-login { margin-left: auto; text-decoration: underline; text-underline-offset: 4px; padding: 10px 2px; }
+#homeGarden .lobby-header .sg-launch {
+    min-height: 36px; padding: 6px 12px; border: 1.5px solid var(--letter);
+    border-radius: 37% 54% 39% 43% / 32% 38% 42% 45%;
+    background: transparent; color: var(--letter);
+}
+.lobby-header .sg-book { display: none; }
+.lobby-header .lobby-location:has(+ .sg-launch) { margin-inline-start: 0; }
+.lobby-header .lobby-location + .sg-launch { margin-left: auto; }
+#homeGarden .lobby-location { margin-inline-start: 0; }
+.lobby-title, .theme-picker-cards, .home-actions {
+    position: absolute; left: 50%; transform: translate(-50%, -50%);
+}
+.lobby-title { top: 40%; width: 94%; pointer-events: none; }
+#homeGarden h1 {
+    display: inline-flex; align-items: baseline; margin: 0; white-space: nowrap;
+    font: 700 clamp(77px, min(8.4vw, 15vh), 146px)/1.18 "STXingkai","STKaiti",KaiTi,"Kaiti SC","Songti SC",SimSun,serif;
+    letter-spacing: .035em; color: var(--letter); text-shadow: none;
+}
+#homeGarden h1 span:nth-child(1) { transform: rotate(-5deg) translateY(.025em); }
+#homeGarden h1 span:nth-child(2) { transform: rotate(2deg) translateY(-.026em); }
+#homeGarden h1 span:nth-child(3) { transform: rotate(-3deg); }
+#homeGarden h1 span:nth-child(4) { transform: rotate(2deg) translateY(.035em); }
+.lobby-title p {
+    margin: clamp(6px,1.3vh,16px) 0 0; color: var(--letter);
+    font: 600 clamp(15px,1.38vw,22px)/1.6 var(--hand); letter-spacing: .15em;
+}
+.theme-picker-cards { top: 65.6%; display: flex; align-items: center; justify-content: center; gap: clamp(16px,3.7vw,70px); }
+#homeGarden .theme-card {
+    --tilt: -3deg; --shape: 46% 57% 49% 54% / 54% 56% 47% 48%;
+    position: relative; display: grid; align-content: center; justify-items: center; gap: 2px;
+    width: clamp(112px, 12vw, 191px); height: clamp(60px, 8.9vh, 92px);
+    color: var(--ink); background: var(--paper); border: 2px solid var(--ink);
+    border-radius: var(--shape); box-shadow: 1px 2px 0 var(--ink); cursor: pointer;
+    font-family: var(--hand); line-height: 1; padding: 4px; transform: rotate(var(--tilt));
+    transition: transform .16s ease-out;
+}
+#homeGarden .theme-card:nth-child(2) { --tilt: 1.5deg; --shape: 57% 48% 52% 46% / 52% 56% 47% 55%; }
+#homeGarden .theme-card:nth-child(3) { --tilt: -1deg; --shape: 49% 55% 45% 55% / 54% 48% 59% 47%; }
+#homeGarden .theme-card.is-active { background-color: var(--petal); }
+#homeGarden .theme-card.is-active::after {
+    content: ""; position: absolute; inset: 3px 4px 4px 3px;
+    border: 1px solid var(--ink); border-radius: 48% 54% 51% 45% / 55% 54% 44% 53%;
+}
+#homeGarden .tc-time { font: 600 clamp(12px,1vw,15px)/1.15 var(--hand); letter-spacing: .20em; }
+#homeGarden .tc-name { font: 700 clamp(19px,1.75vw,29px)/1.12 var(--hand); letter-spacing: .06em; }
+.home-actions { top: 82.2%; }
+#homeGarden .home-enter {
+    display: inline-flex; justify-content: center; align-items: center; gap: clamp(15px,2vw,30px);
+    position: relative; min-height: 54px; padding: 11px clamp(24px,2.6vw,42px);
+    width: max-content; color: var(--paper); background: var(--ink); text-decoration: none;
+    border: 2px solid var(--ink); border-radius: 5px 2px 6px 2px / 2px 5px 2px 6px;
+    box-shadow: 2px 3px 0 var(--paper); transform: rotate(-1.2deg);
+    font: 700 clamp(20px,1.75vw,28px)/1.2 var(--hand); letter-spacing: .11em;
+}
+.home-enter::before { content: ""; position: absolute; inset: 3px; border: 1px solid var(--paper); border-radius: 2px 4px 2px 3px; }
+.home-enter i { width: 24px; height: 12px; background: var(--paper); clip-path: polygon(0 46%,77% 39%,62% 3%,70% 2%,100% 48%,68% 100%,60% 94%,78% 58%,2% 64%); }
+#lobbyStatus { position: absolute; left: 50%; transform: translateX(-50%); width: max-content; max-width: min(86vw,440px); margin: 8px 0 0; background: var(--paper); color: var(--ink); font: 600 14px/1.6 var(--hand); }
+#lobbyStatus:not(:empty) { padding: 5px 12px; }
+#homeGarden :is(button,a):focus-visible { outline: 3px dashed var(--letter); outline-offset: 5px; }
+body:has(#homeGarden) .sg-card { border-radius: 4px 11px 6px 7px; }
+@media (hover:hover) {
+    #homeGarden .theme-card:hover { transform: translateY(-3px) rotate(calc(var(--tilt) - 1.5deg)); }
+    #homeGarden .home-enter:hover { transform: translateY(-2px) rotate(-2deg); }
+}
+@media (max-aspect-ratio: 4/5) {
+    .lobby-landscape { background-image: url("../garden/lobby/tall-morning.png"); }
+    [data-period="noon"] .lobby-landscape { background-image: url("../garden/lobby/tall-noon.png"); }
+    [data-period="night"] .lobby-landscape { background-image: url("../garden/lobby/tall-night.png"); }
+}
+/* Each printing plate keeps its cut marks as the light changes. This also
+   avoids a second landscape download on the first visit to another time. */
+@supports (mask-image: linear-gradient(black, transparent)) {
+    #homeGarden .lobby-landscape { background: var(--sky); transition: background-color .75s ease; }
+    .lobby-cut {
+        position: absolute; inset: 0; background-color: var(--cut-color);
+        mask: var(--wide-cut) center / 100% 100% no-repeat;
+        transition: background-color .75s ease;
+    }
+    #homeGarden .theme-card, #homeGarden .theme-card.is-active {
+        isolation: isolate; border: 0; background: transparent; box-shadow: none;
+        --stamp-fill: var(--paper);
+    }
+    #homeGarden .theme-card.is-active { --stamp-fill: var(--petal); }
+    #homeGarden .theme-card::before, #homeGarden .theme-card::after,
+    #homeGarden .theme-card.is-active::after {
+        content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+        border: 0; border-radius: 0; background: var(--stamp-fill);
+        mask: var(--stamp-shape) center / 100% 100% no-repeat;
+    }
+    #homeGarden .theme-card::after, #homeGarden .theme-card.is-active::after {
+        mask-image: var(--stamp-edge); background: var(--ink);
+    }
+    #homeGarden .theme-card.is-active .tc-name { text-decoration: underline; text-underline-offset: 3px; }
+    @media (max-aspect-ratio: 4/5) { .lobby-cut { mask-image: var(--tall-cut); } }
+}
+@media (max-width: 670px) {
+    #homeGarden { min-height: 510px; }
+    .lobby-header { gap: 11px; top: max(14px,env(safe-area-inset-top)); }
+    .lobby-location { display: none; }
+    .lobby-header .lobby-brand + .lobby-location + .sg-launch { margin-left: auto; }
+    #homeGarden .home-login, #homeGarden .sg-launch { font-size: 13px; }
+    #homeGarden .lobby-header .sg-launch { min-height: 44px; padding: 5px 8px; }
+    .lobby-sun { width: clamp(68px,16vw,90px); }
+    .lobby-title { top: 39%; }
+    #homeGarden h1 { font-size: clamp(56px,15vw,84px); }
+    .lobby-title p { font-size: clamp(13px,3.5vw,17px); letter-spacing: .06em; }
+    .theme-picker-cards { top: 64.3%; width: min(92%,480px); gap: clamp(7px,2.6vw,15px); }
+    #homeGarden .theme-card { flex: 1; width: auto; max-width: 127px; height: 62px; }
+    #homeGarden .tc-name { font-size: 20px; }
+    .home-actions { top: 79.4%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #homeGarden .lobby-landscape, #homeGarden .lobby-cut { transition: none; }
+    #homeGarden .theme-card, #homeGarden .theme-card:hover, #homeGarden .home-enter:hover { transition: none; }
+    #homeGarden .theme-card:hover { transform: rotate(var(--tilt)); }
+    #homeGarden .home-enter:hover { transform: rotate(-1.2deg); }
+}

@@ -1,0 +1,98 @@
+/* ============================================================
+   页面样式：journal/create.html
+   从模板内嵌 <style> 抽出，内容与原来完全一致。
+   修改本文件只影响样式，不会影响页面功能，可放心调整。
+   ============================================================ */
+
+.journal-create-container {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.journal-create-container h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #3D3D3D;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+textarea {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1.5px solid #EDE9E2;
+    border-radius: 12px;
+    resize: vertical;
+    font-size: 15px;
+    font-family: inherit;
+    line-height: 1.7;
+    color: #3D3D3D;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-height: 200px;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: var(--sage);
+    box-shadow: 0 0 0 3px rgba(90,158,150,0.1);
+}
+
+textarea::placeholder {
+    color: #bbb;
+}
+
+.voice-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: var(--sage);
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.voice-btn:hover {
+    background: var(--sage-hover);
+    box-shadow: 0 2px 8px rgba(90,158,150,0.3);
+}
+
+.voice-btn.recording {
+    background: #E05555;
+    animation: pulse-rec 1.5s infinite;
+}
+
+@keyframes pulse-rec {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(224,85,85,0.4); }
+    50%      { box-shadow: 0 0 0 10px rgba(224,85,85,0); }
+}
+
+button[type="submit"] {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 28px;
+    background: #D4806E;
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.2s;
+    margin-left: 8px;
+}
+
+button[type="submit"]:hover {
+    background: #C06A58;
+    box-shadow: 0 2px 8px rgba(212,128,110,0.3);
+    transform: translateY(-1px);
+}

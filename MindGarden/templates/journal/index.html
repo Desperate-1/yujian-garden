@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}我的日记 - 愈见花园{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/journal_index.css') }}">
+<div class="journal-container">
+    <h2>我的日记</h2>
+
+    {# ===== 危机信号提示 =====
+       写日记时若命中危机信号（如"活着没意思""撑不下去"），在这里显示一次。
+       设计原则：
+         · 语气是**陪伴而非警示** —— 不说教、不诊断、不承诺保密
+         · 不阻断正常使用，用户可关闭；关闭后不再重复出现
+         · 提供真实可用的求助渠道（热线号码来自公开信息）
+       #}
+    {% if crisis_message %}
+    <div id="crisis-box" class="crisis-box {{ 'crisis-high' if crisis_level == 'high' else '' }}">
+        <button type="button" class="crisis-close" onclick="dismissCrisis()" aria-label="关闭">×</button>
+        {% for line in crisis_message.split('\n') %}
+            {% if line.strip() %}<p>{{ line }}</p>{% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('journal.create') }}" class="btn-primary">写新日记</a>
+    
+    <section class="journal-plot" aria-labelledby="trend-title">
+        <h3 id="trend-title">心情的变化</h3>
+        <p id="trendSummary" aria-live="polite">正在整理你的记录…</p>
+        <div id="trendChart" aria-hidden="true" hidden></div>
+    </section>
+
+    <!-- Journal List with Pagination -->
+    <div class="journal-list-container" style="margin-top: 30px;">
+        <div class="list-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3>日记列表</h3>
+            <div style="flex-shrink: 0;">
+                <button id="batchDeleteBtn" class="btn-danger btn-sm" style="display: none;" onclick="batchDelete()">删除选中</button>
+            </div>
+        </div>
+        
+        <table class="journal-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px; text-align: center;">
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)">
+                    </th>
+                    <th style="width: 60px;">序号</th>
+                    <th>创建时间</th>
+                    <th style="width: 100px;">心情分数</th>
+                    <th style="width: 100px; text-align: center;">操作</th>
+                </tr>
+            </thead>
+            <tbody id="journalListBody">
+                <!-- Journal list will be populated by JavaScript -->
+            </tbody>
+        </table>
+        
+        <!-- Pagination -->
+        <div class="pagination">
+            <button id="prevPage">上一页</button>
+            <span id="pageInfo"></span>
+            <button id="nextPage">下一页</button>
+        </div>
+    </div>
+
+    <!-- Word Cloud Visualization Container -->
+    <section class="journal-plot" aria-labelledby="words-title">
+        <h3 id="words-title">日记里常出现的词</h3>
+        <p id="wordSummary" aria-live="polite"></p>
+        <div id="wordCloudChart" aria-hidden="true" hidden></div>
+    </section>
+</div>
+
+<!-- Load ECharts -->
+<script src="{{ url_for('static', filename='js/echarts.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/echarts-wordcloud.min.js') }}"></script>
+<script>
+    let currentPage = 1;
+    const perPage = 5;
+    let selectedJournals = new Set();
+
+    // Initialize pagination
+    document.getElementById('prevPage').addEventListener('click', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            loadJournalList();
+        }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', function() {
+        currentPage++;
+        loadJournalList();
+    });
+
+    // Load journal list
+    function loadJournalList() {
+        fetch(`/api/journals?page=${currentPage}&per_page=${perPage}`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('journalListBody');
+                const pageInfo = document.getElementById('pageInfo');
+                const prevBtn = document.getElementById('prevPage');
+                const nextBtn = document.getElementById('nextPage');
+                
+                // Update pagination info
+                const pages = Math.max(1, Math.ceil(data.total / perPage));
+                if (currentPage > pages) {
+                    currentPage = pages;
+                    return loadJournalList();
+                }
+                pageInfo.textContent = data.total ? `第 ${currentPage} 页，共 ${pages} 页` : '还没有日记';
+                prevBtn.disabled = currentPage === 1;
+                nextBtn.disabled = currentPage >= Math.ceil(data.total / perPage);
+                
+                // Clear current selections for new page
+                selectedJournals.clear();
+                document.getElementById('selectAll').checked = false;
+                document.getElementById('batchDeleteBtn').style.display = 'none';
+                
+                // Populate table
+                tbody.innerHTML = '';
+                data.journals.forEach((journal, index) => {
+                    const row = document.createElement('tr');
+                    const score = readScore(journal.emotion_score);
+                    const serialNumber = (currentPage - 1) * perPage + index + 1;
+                    
+                    row.innerHTML = `
+                        <td style="text-align: center;">
+                            <input type="checkbox" value="${journal.id}" onchange="toggleJournalSelection(${journal.id})">
+                        </td>
+                        <td>${serialNumber}</td>
+                        <td>${journal.created_at}</td>
+                        <td>
+                            <b>${score === null ? '—' : score.toFixed(2)}</b>
+                            <span class="emotion-label">${getEmotionLabel(score)}</span>
+                        </td>
+                        <td style="text-align: center;">
+                            <a href="/journal/${journal.id}" class="btn-primary btn-sm">查看详情</a>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            });
+    }
+
+    // Toggle select all checkboxes
+    function toggleSelectAll(checked) {
+        const checkboxes = document.querySelectorAll('#journalListBody input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checked;
+            const journalId = parseInt(checkbox.value);
+            if (checked) {
+                selectedJournals.add(journalId);
+            } else {
+                selectedJournals.delete(journalId);
+            }
+        });
+        
+        // Show/hide batch delete button
+        const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+        batchDeleteBtn.style.display = selectedJournals.size > 0 ? 'block' : 'none';
+    }
+
+    // Toggle journal selection
+    function toggleJournalSelection(journalId) {
+        if (selectedJournals.has(journalId)) {
+            selectedJournals.delete(journalId);
+        } else {
+            selectedJournals.add(journalId);
+        }
+        
+        // Update select all checkbox state
+        const checkboxes = document.querySelectorAll('#journalListBody input[type="checkbox"]');
+        const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+        document.getElementById('selectAll').checked = allChecked;
+        
+        // Show/hide batch delete button
+        const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+        batchDeleteBtn.style.display = selectedJournals.size > 0 ? 'block' : 'none';
+    }
+
+    // Batch delete function
+    function batchDelete() {
+        if (selectedJournals.size === 0) {
+            alert('请选择要删除的日记');
+            return;
+        }
+        
+        if (!confirm(`确定要删除选中的 ${selectedJournals.size} 篇日记吗？`)) {
+            return;
+        }
+        
+        const journalIds = Array.from(selectedJournals);
+        fetch('/api/journals/batch-delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ journal_ids: journalIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                //alert('删除成功');
+                selectedJournals.clear();
+                document.getElementById('selectAll').checked = false;
+                document.getElementById('batchDeleteBtn').style.display = 'none';
+                loadJournalList(); // Reload the list
+                // Optionally reload emotion chart data
+                loadEmotionData();
+            } else {
+                alert('删除失败：' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('删除失败');
+        });
+    }
+
+    function readScore(value) {
+        if (value === null || value === undefined || value === '') return null;
+        const score = Number(value);
+        return Number.isFinite(score) && score >= 0 && score <= 1 ? score : null;
+    }
+
+    // 情绪档位标签：跟在分数旁边，让"低分"有可读的语义
+    function getEmotionLabel(score) {
+        if (score === null || score === undefined) return '无记录';
+        const v = Number(score);
+        if (v < 0.15) return '很沉';
+        if (v < 0.35) return '偏低';
+        if (v < 0.55) return '平稳';
+        if (v < 0.75) return '轻快';
+        return '明亮';
+    }
+
+    // 关闭危机提示：通知服务端清除一次性消息，避免刷新又出现
+    function dismissCrisis() {
+        const box = document.getElementById('crisis-box');
+        if (box) box.style.display = 'none';
+        fetch('/journal/dismiss-crisis', { method: 'POST' }).catch(() => {});
+    }
+
+    const inkStyle = getComputedStyle(document.documentElement);
+    const inks = Object.fromEntries(['paper', 'ink', 'leaf', 'sand', 'accent'].map(name =>
+        [name, inkStyle.getPropertyValue('--mg-' + name).trim()]));
+    const charts = new Map();
+    const resizeCharts = new ResizeObserver(entries => {
+        for (const entry of entries) charts.get(entry.target)?.resize();
+    });
+
+    function chartFor(element) {
+        if (!charts.has(element)) {
+            charts.set(element, echarts.init(element));
+            resizeCharts.observe(element);
+        }
+        return charts.get(element);
+    }
+
+    function drawTrend(dates, rawScores) {
+        const scores = rawScores.map(readScore);
+        const recorded = scores.map((value, i) => value === null ? -1 : i).filter(i => i >= 0);
+        const plot = document.getElementById('trendChart');
+        const summary = document.getElementById('trendSummary');
+        plot.hidden = !recorded.length;
+        if (!recorded.length) {
+            summary.textContent = '有了心情记录，这里会按时间显示它的变化。';
+            return;
+        }
+        const first = recorded[0], last = recorded[recorded.length - 1];
+        const delta = scores[last] - scores[first];
+        summary.textContent = recorded.length === 1
+            ? `${dates[first]} · ${getEmotionLabel(scores[first])}（${scores[first].toFixed(2)}），这是你的第一条心情记录。`
+            : `共 ${recorded.length} 条 · 首次 ${scores[first].toFixed(2)}，最近 ${scores[last].toFixed(2)}（${delta > 0 ? '上升' : delta < 0 ? '下降' : '持平'}${delta ? ' ' + Math.abs(delta).toFixed(2) : ''}）。`;
+        const points = scores.map((value, i) => ({
+            value,
+            symbol: i === last ? 'diamond' : 'circle',
+            symbolSize: i === first || i === last ? 10 : 4,
+            itemStyle: { color: i === last ? inks.accent : i === first ? inks.leaf : inks.ink,
+                borderColor: inks.ink, borderWidth: 1 }
+        }));
+        chartFor(plot).setOption({
+            animation: false,
+            grid: { left: 32, right: 27, top: 16, bottom: 28 },
+            tooltip: { trigger: 'axis', renderMode: 'richText', confine: true,
+                backgroundColor: inks.paper, textStyle: { color: inks.ink }, borderColor: inks.ink },
+            xAxis: { type: 'category', data: dates, axisLabel: { color: inks.ink, hideOverlap: true,
+                formatter: date => String(date).slice(5) }, axisLine: { lineStyle: { color: inks.leaf } } },
+            yAxis: { type: 'value', min: 0, max: 1, interval: 0.5, axisLabel: { color: inks.ink },
+                splitLine: { lineStyle: { color: inks.sand, type: 'dashed' } } },
+            series: [{ type: 'line', name: '心情分数', showAllSymbol: true, lineStyle: { color: inks.ink },
+                data: points }]
+        }, true);
+    }
+
+    function drawWords(words) {
+        const plot = document.getElementById('wordCloudChart');
+        plot.hidden = !words.length;
+        document.getElementById('wordSummary').textContent = words.length
+            ? words.slice(0, 3).map(word => word.name + ' · ' + word.value + ' 次').join('　')
+            : '写下几篇日记后，可以在这里回看常写的词。';
+        if (!words.length) return;
+        chartFor(plot).setOption({
+            animation: false, tooltip: { renderMode: 'richText', confine: true },
+            series: [{ type: 'wordCloud', shape: 'circle', sizeRange: [14, 42], rotationRange: [0, 0],
+                gridSize: 8, drawOutOfBound: false, data: words.map((word, i) => ({
+                    name: word.name, value: word.value, textStyle: { color: i % 3 === 0 ? inks.accent : inks.ink }
+                })) }]
+        }, true);
+    }
+
+    async function loadEmotionData() {
+        try {
+            const response = await fetch('/api/emotion-data');
+            if (!response.ok) throw new Error('load');
+            const data = await response.json();
+            drawTrend(data.dates || [], data.scores || []);
+            drawWords(data.wordCloudData || []);
+        } catch {
+            document.getElementById('trendSummary').textContent = '暂时没有读到记录，稍后刷新即可重试。';
+            document.getElementById('wordSummary').textContent = '暂时没有读到关键词。';
+        }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadEmotionData();
+        loadJournalList();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+/* Five paint families: spring green, sky, cherry, honey and cream.
+   The line colour is a deep shade of the local cherry or foliage. Hex values
+   are also read directly by Three.Color when the theme is loaded. */
+body:has(#paperGarden) {
+    --pg-paper:#f1e9de; --pg-ink:#3c4155; --pg-leaf:#709278;
+    --pg-sky:#83b9e9; --pg-gold:#dfb465; --pg-blossom:#eb9cbb;
+}
+html[data-theme="fresh"] body:has(#paperGarden) {
+    --pg-paper:#f4eee0; --pg-ink:#384955; --pg-leaf:#729e87;
+    --pg-sky:#8acde3; --pg-gold:#e3be72; --pg-blossom:#edafc3;
+}
+html[data-theme="ugly"] body:has(#paperGarden) {
+    --pg-paper:#ded6e8; --pg-ink:#303549; --pg-leaf:#587b77;
+    --pg-sky:#555b94; --pg-gold:#f7cc84; --pg-blossom:#c38da8;
+}
+.paper-garden {
+    --pg-serif:"Microsoft YaHei UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--pg-paper); border-color:var(--pg-paper);
+}
+.paper-header { border-color:color-mix(in srgb,var(--pg-sky) 44%,var(--pg-paper)); }
+.paper-brand { color:var(--pg-ink); font:italic 700 clamp(25px,2.5vw,38px)/1 Georgia,serif; }
+.paper-book-title { border-left-color:var(--pg-blossom); letter-spacing:.06em; }
+.paper-caption { border-top-color:color-mix(in srgb,var(--pg-gold) 56%,var(--pg-paper)); }
+.paper-stage { border-radius:15px 18px 13px 17px; }
+.paper-actions .paper-primary {
+    background:var(--pg-ink); color:var(--pg-paper); border-radius:14px 16px 13px 15px;
+    outline:0; box-shadow:inset 0 -3px 0 rgb(0 0 0 / .11);
+}
+.paper-orbit,.paper-menu,#paperAudio { border-radius:14px; }
+.paper-orbit,.paper-menu { overflow:hidden; }
+.paper-place h1 { letter-spacing:.035em; }
